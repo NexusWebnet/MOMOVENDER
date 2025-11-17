@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Dashboard</title>
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+   
+      <header class="header">
+        <div class="header-top">
+         <i class="fas fa-bars header-icon left" onclick="toggleMenu()"></i>
+         <h1>Welcome, Manager!</h1>
+         <i class="fas fa-bell header-icon right"></i>
+      </div>
+
+       <div class="search-bar">
+        <i class="fas fa-search"></i>
+       <input type="text" placeholder="Search transactions...">
+     </div>
+    </header>
+
+      <div class="sidebar" id="sidebar">
+            <div class="menu-header">
+                <h3>Menu</h3>
+                <i class="fas fa-times close-btn" onclick="toggleMenu()"></i>
+            </div>
+            <ul class="menu-list">
+                <li class="menu-item" onclick="navigate('dashboard')">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item" onclick="navigate('transaction')">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Transaction</span>
+                </li>
+                <li class="menu-item" onclick="navigate('history')">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </li>
+                <li class="menu-item" onclick="navigate('profile')">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </li>
+                <li class="menu-item" onclick="navigate('notifications')">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </li>
+                <li class="menu-item" onclick="navigate('withdrawal')">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Withdrawal</span>
+                </li>
+            </ul>
+        </div>
+
+
+    <section class="dashboard">
+      <div class="card glass">
+        <div class="card-header">
+          <i class="fas fa-wallet"></i>
+          <h3>Branch Cash Flow</h3>
+        </div>
+        <div class="cashflow">
+          <div class="cashflow-child">
+            <p>Total Float</p>
+            <h4>₵30,000.00</h4>
+          </div>
+          <div class="cashflow-child">
+            <p>Spent</p>
+            <h4 class="success">₵30,000.00</h4>
+          </div>
+          <div class="cashflow-child">
+            <p>Balance</p>
+            <h4 class="danger">₵10,000.00</h4>
+          </div>
+        </div>
+      </div>
+
+      <div class="card glass">
+        <div class="card-header">
+          <i class="fas fa-hourglass-half"></i>
+          <h3>Pending Approvals</h3>
+        </div>
+        <h2 class="pending-number">7</h2>
+        <p>Awaiting your actions</p>
+      </div>
+
+      <div class="card glass">
+        <div class="card-header">
+          <i class="fas fa-users"></i>
+          <h3>Staff Activity</h3>
+        </div>
+        <div class="staff-list">
+        <div class="staff-item">
+         <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+         <div class="staff-info">
+          <p>Nana Yaw</p>
+          <div class="active1">
+            <div class="status active"></div>
+           <p>Online </p>
+          </div>
+          
+         </div>
+        </div>
+        <div class="staff-item">
+         <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+         <div class="staff-info">
+          <p>Nana Ama</p>
+          <div class="active1">
+            <div class="status busy"></div>
+           <p>Online </p>
+          </div>
+          
+         </div>
+        </div>
+        <div class="staff-item">
+         <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+         <div class="staff-info">
+          <p>Charles adjei</p>
+          <div class="active1">
+            <div class="status offline"></div>
+           <p>Online </p>
+          </div>
+          
+         </div>
+        </div>
+        <div class="staff-item">
+         <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+         <div class="staff-info">
+          <p>Charles adjei</p>
+          <div class="active1">
+            <div class="status offline"></div>
+           <p>Online </p>
+          </div>
+          
+         </div>
+        </div>
+        <div class="staff-item">
+         <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+         <div class="staff-info">
+          <p>Charles adjei</p>
+          <div class="active1">
+            <div class="status offline"></div>
+           <p>Online </p>
+          </div>
+          
+         </div>
+        </div>
+        <div class="staff-item">
+         <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+         <div class="staff-info">
+          <p>Charles adjei</p>
+          <div class="active1">
+            <div class="status offline"></div>
+           <p>Online </p>
+          </div>
+          
+         </div>
+        </div>
+        <div class="staff-item">
+         <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+         <div class="staff-info">
+          <p>Charles adjei</p>
+          <div class="active1">
+            <div class="status offline"></div>
+           <p>Online </p>
+          </div>
+          
+         </div>
+        </div>
+        <div class="staff-item">
+         <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+         <div class="staff-info">
+          <p>Charles adjei</p>
+          <div class="active1">
+            <div class="status offline"></div>
+           <p>Online </p>
+          </div>
+          
+         </div>
+        </div>
+        <div class="staff-item">
+         <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+         <div class="staff-info">
+          <p>Charles adjei</p>
+          <div class="active1">
+            <div class="status offline"></div>
+           <p>Online </p>
+          </div>
+          
+         </div>
+        </div>
+
+      
+      </div>
+
+      <div class="card glass chart-card">
+        <h3>Daily Performance Overview</h3>
+        <canvas id="dailyChart"></canvas>
+      </div>
+
+      <div class="card glass chart-card">
+        <h3>Monthly Revenue Trend</h3>
+        <canvas id="revenueChart"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <script src="../js/dashboard.js"></script>
+</body>
+</html>

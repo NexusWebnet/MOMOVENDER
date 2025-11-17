@@ -1,0 +1,354 @@
+body{
+    font-family: 'Roboto',sans-serif;
+    background-color: #fafafc;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow-x: hidden;
+}
+.container{
+    padding: 16px;
+    max-width: 100%;
+    box-sizing: border-box;
+
+}
+.header{
+    background: rgb( 78, 52,226,0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 20px;
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.header-top{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.header-icon{
+    font-size: 22px;
+    color: #fff;
+    cursor: pointer;
+    transition: color 0.3s, transform 0.2s;
+}
+.header-icon:hover{
+    color: #ffd700;
+    transform: scale(1.1);
+}
+
+/* SEARCH BAR */
+.search-bar{
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 30px;
+    padding: 10px 16px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: inset 1px 4px rgba(255, 255, 255, 0.2);
+}
+.search-bar i{
+    color: #fff;
+    margin-right: 8px;
+}
+.search-bar input{
+    border: none;
+    outline: none;
+    flex: 1;
+    font-size: 14px ;
+    color: #fff;
+    background: transparent;
+}
+.search-bar input::placeholder{
+    color: rgba(255, 255, 255, 0.8);
+}
+/* --- MOBILE RESPONSIVE --- */
+@media (max-width: 600px) {
+  .header h1 {
+    font-size: 18px;
+  }
+
+  .search-bar {
+    max-width: 90%;
+  }
+}
+
+.sidebar{
+    position: fixed;
+    top:0;
+    left: -300px;
+    width: 250px;
+    height: 100%;
+    background: linear-gradient(180deg,#2c003e,#1a001f);
+    background-image: "../../assets/images/sidebar-bg.jpg";
+    background-size: cover;
+    background-blend-mode: multiply;
+    box-shadow: 3px 0 6px rgba(0,0,0,0.3);
+    padding: 16px;
+    transition: left 0.4s ease-in-out;
+    z-index: 1001;
+    border-right: 2px solid rgba(255,215,0,0.3);
+    overflow-y: auto;
+}
+.sidebar.active{
+    left: 0;
+}
+.menu-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+.menu-header h3{
+    font-size: 20px;
+    font-weight: 700;
+    color: #f9f9f9;
+    letter-spacing: 0.5px;
+}   
+.close-btn {
+    font-size: 22px;
+    color: #ffcc00;
+    cursor: pointer;
+    transition: transform 0.3s ease, color 0.3s;
+}
+
+.close-btn:hover {
+    color: #ffd700;
+    transform: rotate(90deg);
+}
+
+/* Menu List */
+.menu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+/* Menu Items */
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+    padding: 12px 10px;
+    color: #e6e6e6;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+/* Icon style */
+.menu-item i {
+    font-size: 18px;
+    color: #d1d1d1;
+    transition: color 0.3s ease;
+}
+
+/* Text */
+.menu-item span {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* Hover effect with gold stroke + animation */
+.menu-item:hover {
+    background: rgba(255, 215, 0, 0.1);
+    border-left: 3px solid #ffd700;
+    color: #ffd700;
+    transform: translateX(5px);
+    box-shadow: inset 0 0 8px rgba(255, 215, 0, 0.2);
+}
+
+.menu-item:hover i {
+    color: #ffd700;
+}
+
+/* Subtle fade-in animation for menu */
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.menu-item {
+    animation: fadeSlideIn 0.5s ease forwards;
+    animation-delay: calc(var(--i) * 0.05s);
+    opacity: 0;
+}
+
+/* Scrollbar for sidebar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 215, 0, 0.4);
+    border-radius: 4px;
+}
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 215, 0, 0.1);
+}
+.employee-header{
+    display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  margin-right: 10px;
+    
+}
+.view-btn {
+  background: #6c5ce7;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.view-btn:hover {
+  background: #8e7cf8;
+}
+
+
+.staff-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+    margin-bottom: 15px;
+}
+.staff-item img{
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.staff-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Status indicator circle */
+.status {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0,0,0,0.2);
+}
+
+/* Status colors */
+.active {
+  background-color: #4CAF50; /* Green */
+  box-shadow: 0 0 8px #4CAF50;
+}
+.active1{
+  display: flex;
+  gap: 5px;
+}
+
+.offline {
+  background-color: #9e9e9e; /* Gray */
+}
+
+.busy {
+  background-color: #f44336; /* Red */
+  box-shadow: 0 0 8px #f44336;
+}
+
+.staff-info p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+ .card-arrow {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 20px;
+    color: #999;
+    cursor: pointer;
+    transition: transform 0.3s ease, color 0.3s ease;
+  }
+
+  /* Modal background */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.5);
+}
+
+/* Modal content box */
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+}
+
+/* Close button */
+.modal .close-btn {
+  color: #aaa;
+  float: right;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Form inputs */
+#addStaffForm input {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+#addStaffForm label {
+  font-weight: 600;
+  margin-top: 10px;
+  display: block;
+}
+
+/* Submit button */
+.submit-btn {
+  background-color: #4CAF50;
+  color: white;
+  padding: 12px 20px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.submit-btn:hover {
+  background-color: #45a049;
+}

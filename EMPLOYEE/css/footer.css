@@ -1,0 +1,55 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow-x: hidden;
+    background-color: #f0e6ff; /* Matches your app's theme */
+}
+
+.content {
+    flex: 1;
+    padding: 16px;
+}
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #d3d3d3; /* Light gray background */
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.nav-item {
+    text-decoration: none;
+    color: #666; /* Grayish text */
+    text-align: center;
+    flex: 1;
+    padding: 5px 0;
+    transition: color 0.3s, background-color 0.3s;
+}
+
+.nav-item i {
+    font-size: 20px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.nav-item span {
+    font-size: 12px;
+    display: block;
+}
+
+.nav-item.active {
+    color: #1e90ff; /* Blue for active state */
+    background-color: rgba(30, 144, 255, 0.1); /* Light blue background for active */
+}
+
+.nav-item:hover {
+    color: #1e90ff;
+}

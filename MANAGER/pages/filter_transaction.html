@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MoMo Banking Transactions</title>
+    <link rel="stylesheet" href="../css/filter_transaction.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome for icons -->
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div class="container">
+        
+         <header class="header">
+        <div class="header-top">
+         <i class="fas fa-bars header-icon left" onclick="toggleMenu()"></i>
+         <h1>Welcome, Nana!</h1>
+         <i class="fas fa-bell header-icon right"></i>
+        </div>
+
+  <div class="search-bar">
+    <i class="fas fa-search"></i>
+    <input type="text" placeholder="Search transactions...">
+  </div>
+</header>
+    
+
+  <div class="sidebar" id="sidebar">
+            <div class="menu-header">
+                <h3>Menu</h3>
+                <i class="fas fa-times close-btn" onclick="toggleMenu()"></i>
+            </div>
+            <ul class="menu-list">
+                <li class="menu-item" onclick="navigate('dashboard')">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item" onclick="navigate('transaction')">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Transaction</span>
+                </li>
+                <li class="menu-item" onclick="navigate('history')">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </li>
+                <li class="menu-item" onclick="navigate('profile')">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </li>
+                <li class="menu-item" onclick="navigate('notifications')">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </li>
+                <li class="menu-item" onclick="navigate('withdrawal')">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Withdrawal</span>
+                </li>
+            </ul>
+        </div>
+
+<div class="filter">
+    <h3>Filter Report</h3>
+        <section class="date-filter">
+           
+            <div class="filter-group">
+                <label for="start-date">Start Date</label>
+                <input type="date" id="start-date" name="start-date">
+            </div>
+            <div class="filter-group">
+                <label for="end-date">End Date</label>
+                <input type="date" id="end-date" name="end-date">
+            </div>
+             <div class="filter-group">
+                <label for="report-type">Report Type</label>
+                <select id="report-type" name="report-type">
+                    <option value="all">All</option>
+                    <option value="deposit">MoMo Bank Deposit</option>
+                    <option value="withdrawal">Withdrawal</option>
+                </select>
+            </div>
+            <button class="filter-btn" onclick="filterTransactions()">Filter</button>
+        </section>
+
+</div>
+       
+
+        <section class="recent-transactions">
+            <h3>Recent Transactions</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>+300</td>
+                        <td><span class="status completed">Completed</span></td>
+                        <td>2025-10-15</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>-200</td>
+                        <td><span class="status cancelled">Cancelled</span></td>
+                        <td>2025-10-14</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>+200</td>
+                        <td><span class="status completed">Completed</span></td>
+                        <td>2025-10-13</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>-200</td>
+                        <td><span class="status cancelled">Cancelled</span></td>
+                        <td>2025-10-14</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>+200</td>
+                        <td><span class="status completed">Completed</span></td>
+                        <td>2025-10-13</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>-200</td>
+                        <td><span class="status cancelled">Cancelled</span></td>
+                        <td>2025-10-14</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>+200</td>
+                        <td><span class="status completed">Completed</span></td>
+                        <td>2025-10-13</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>-200</td>
+                        <td><span class="status cancelled">Cancelled</span></td>
+                        <td>2025-10-14</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>+200</td>
+                        <td><span class="status completed">Completed</span></td>
+                        <td>2025-10-13</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>-200</td>
+                        <td><span class="status cancelled">Cancelled</span></td>
+                        <td>2025-10-14</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>+200</td>
+                        <td><span class="status completed">Completed</span></td>
+                        <td>2025-10-13</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>-200</td>
+                        <td><span class="status cancelled">Cancelled</span></td>
+                        <td>2025-10-14</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>+200</td>
+                        <td><span class="status completed">Completed</span></td>
+                        <td>2025-10-13</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>-200</td>
+                        <td><span class="status cancelled">Cancelled</span></td>
+                        <td>2025-10-14</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>+200</td>
+                        <td><span class="status completed">Completed</span></td>
+                        <td>2025-10-13</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>-200</td>
+                        <td><span class="status cancelled">Cancelled</span></td>
+                        <td>2025-10-14</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>+200</td>
+                        <td><span class="status completed">Completed</span></td>
+                        <td>2025-10-13</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>-200</td>
+                        <td><span class="status cancelled">Cancelled</span></td>
+                        <td>2025-10-14</td>
+                    </tr>
+                    <tr>
+                        <td>Int'l Deposit</td>
+                        <td>+200</td>
+                        <td><span class="status completed">Completed</span></td>
+                        <td>2025-10-13</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item" data-section="dashboard">
+            <i class="fas fa-home"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="transactions.html" class="nav-item" data-section="transaction" class="active">
+            <i class="fas fa-exchange-alt"></i>
+            <span>Transaction</span>
+        </a>
+        <a href="filter_transaction.html" class="nav-item" data-section="history">
+            <i class="fas fa-history"></i>
+            <span>History</span>
+        </a>
+        <a href="profile.html" class="nav-item" data-section="profile">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </nav>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

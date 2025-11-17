@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transaction Receipt</title>
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    font-family: "Poppins", sans-serif;
+  }
+
+  body {
+    background: #f2f4f7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+  }
+
+  .receipt-container {
+    width: 100%;
+    max-width: 400px;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  .logo {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 10px;
+  }
+
+  .header h2 {
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .section {
+    padding: 12px 0;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14px;
+  }
+
+  .row span:first-child {
+    font-weight: 600;
+  }
+
+  #qrcode {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .btn-print {
+    width: 100%;
+    max-width: 400px;
+    background: #6a5acd;
+    color: white;
+    text-align: center;
+    padding: 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-print:hover {
+    background: #5a4ccf;
+  }
+
+  @media print {
+    .btn-print, body {
+      visibility: hidden;
+    }
+    .receipt-container, .receipt-container * {
+      visibility: visible;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- RECEIPT -->
+<div class="receipt-container" id="receiptArea">
+  <div class="header">
+    <img src="https://i.ibb.co/bb8q9qS/logo.png" alt="Logo" class="logo">
+    <h2>Transaction Receipt</h2>
+    <p>Thank you for using our service</p>
+  </div>
+
+  <div class="section">
+    <div class="row"><span>Employee:</span> <span id="empName"></span></div>
+    <div class="row"><span>Customer:</span> <span id="custName"></span></div>
+    <div class="row"><span>Transaction Type:</span> <span id="transType"></span></div>
+    <div class="row"><span>Network / Bank:</span> <span id="network"></span></div>
+    <div class="row"><span>Amount:</span> <span id="amount"></span></div>
+    <div class="row"><span>Reference:</span> <span id="reference"></span></div>
+    <div class="row"><span>Date:</span> <span id="date"></span></div>
+    <div class="row"><span>Transaction ID:</span> <span id="transID"></span></div>
+  </div>
+
+  <div id="qrcode"></div>
+</div>
+
+<button class="btn-print" onclick="printReceipt()">Print Receipt</button>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<script>
+  // ✅ Pull values from sessionStorage
+  const customerName = sessionStorage.getItem("customerName");
+  const amount = sessionStorage.getItem("amount");
+  const transactionId = sessionStorage.getItem("transactionId");
+  const reference = sessionStorage.getItem("reference");
+  const network = sessionStorage.getItem("network"); // MTN, Vodafone, AirtelTigo or Bank
+
+  // ✅ Determine if it's MoMo or Bank deposit
+  const transactionType = network.includes("MTN") || network.includes("Vodafone") || network.includes("AirtelTigo")
+    ? "MoMo Transaction"
+    : "Bank Deposit";
+
+  const employeeName = "Nana Yaw"; // (Later: fetch from session after login)
+
+  // ✅ Fill receipt values
+  document.getElementById("empName").innerText = employeeName;
+  document.getElementById("custName").innerText = customerName;
+  document.getElementById("network").innerText = network;
+  document.getElementById("reference").innerText = reference || "N/A";
+  document.getElementById("transType").innerText = transactionType;
+  document.getElementById("amount").innerText = "₵" + amount;
+  document.getElementById("date").innerText = new Date().toLocaleString();
+  document.getElementById("transID").innerText = transactionId;
+
+  // ✅ QR Code now contains entire transaction details
+  const qrContent = `
+  Transaction ID: ${transactionId}
+  Customer: ${customerName}
+  Amount: ₵${amount}
+  Type: ${transactionType}
+  Network/Bank: ${network}
+  `;
+
+  new QRCode(document.getElementById("qrcode"), {
+      text: qrContent,
+      width: 130,
+      height: 130,
+  });
+
+  function printReceipt() {
+    window.print();
+  }
+</script>
+
+</body>
+</html>

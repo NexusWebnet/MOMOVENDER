@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile Money Transaction</title>
+<link rel="stylesheet" href="../css/momo.css">
+</head>
+<body>
+
+<div class="container">
+    <h2>Mobile Money Transaction</h2>
+
+    <form id="momoForm">
+        
+        <!-- NETWORK -->
+        <label for="network">Network</label>
+        <select id="network" required>
+            <option value="" disabled selected>Select Network</option>
+            <option value="MTN">MTN</option>
+            <option value="Vodafone">Vodafone</option>
+            <option value="AirtelTigo">AirtelTigo</option>
+        </select>
+
+        <!-- CUSTOMER NUMBER -->
+        <label for="customerNumber">Customer Number</label>
+        <input type="text" id="customerNumber" placeholder="024 ******" required maxlength="10">
+
+        <!-- CUSTOMER NAME (AUTO FILLED FROM DB) -->
+        <label for="customerName">Customer Name</label>
+        <input type="text" id="customerName" readonly placeholder="Fetching name..." required>
+
+        <!-- AMOUNT -->
+        <label for="amount">Amount (GHS)</label>
+        <input type="number" id="amount" placeholder="Enter amount" required>
+
+        <!-- REFERENCE -->
+        <label for="reference">Reference (optional)</label>
+        <input type="text" id="reference" placeholder="Description / Reason">
+
+        <button type="submit">Proceed</button>
+    </form>
+</div>
+
+<script src="../js/momo.js"></script>
+</body>
+</html>

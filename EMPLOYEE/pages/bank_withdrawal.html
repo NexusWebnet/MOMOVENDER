@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bank Withdrawal</title>
+<link rel="stylesheet" href="../css/bank_withdrawal.css">
+</head>
+<body>
+
+<div class="container">
+    <h2>Select Bank for Withdrawal</h2>
+
+    <!-- Bank Options -->
+    <div class="bank-card" data-bank="Access Bank">
+        <i class="fas fa-university"></i> Access Bank
+    </div>
+    <div class="bank-card" data-bank="Ecobank">
+        <i class="fas fa-university"></i> Ecobank
+    </div>
+    <div class="bank-card" data-bank="GCB Bank">
+        <i class="fas fa-university"></i> GCB Bank
+    </div>
+    <div class="bank-card" data-bank="Fidelity Bank">
+        <i class="fas fa-university"></i> Fidelity Bank
+    </div>
+</div>
+
+<!-- WITHDRAWAL FORM POPUP -->
+<div id="withdrawal-form" class="form-popup hidden">
+    <div class="form-container">
+
+        <h2>Bank Withdrawal</h2>
+        <p id="selectedBank" class="bank-label"></p>
+
+        <label>Customer Name</label>
+        <input type="text" id="customerName" placeholder="Enter customer's name">
+
+        <label>Customer Contact</label>
+        <input type="text" id="customerContact" placeholder="Phone number">
+
+        <label>ID Type</label>
+        <input type="text" id="idType" placeholder="ID Type (Ghana Card, Voter ID, etc.)">
+
+        <label>ID Number</label>
+        <input type="text" id="idNumber" placeholder="Enter ID Number">
+
+        <label>Amount</label>
+        <input type="number" id="amount" placeholder="Enter amount">
+
+        <label>Account Number</label>
+        <input type="text" id="accountNumber" placeholder="Enter account number">
+
+        <label>Narration / Reference</label>
+        <input type="text" id="reference" placeholder="Enter purpose of withdrawal">
+
+        <button id="withdrawBtn">Withdraw</button>
+        <button class="cancelBtn">Cancel</button>
+    </div>
+</div>
+
+<script src="https://kit.fontawesome.com/a2d9d5a64b.js" crossorigin="anonymous"></script>
+<script src="../js/bank_withdrawal.js"></script>
+</body>
+</html>
