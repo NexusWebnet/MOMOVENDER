@@ -1,47 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mobile Money Transaction</title>
-<link rel="stylesheet" href="../css/momo.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MoMo Transaction • My MoMo Shop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .glass { 
+      backdrop-filter: blur(16px) saturate(180%); 
+      background-color: rgba(255, 255, 255, 0.12); 
+      border: 1px solid rgba(255, 255, 255, 0.2); 
+    }
+    .readonly-input {
+      background-color: rgba(255,255,255,0.2) !important;
+      color: white !important;
+      font-weight: bold;
+      cursor: not-allowed;
+    }
+    select, input {
+      @apply w-full px-6 py-4 rounded-2xl bg-white/20 text-white text-lg;
+    }
+  </style>
 </head>
-<body>
+<body class="text-white min-h-screen flex items-center justify-center p-4">
 
-<div class="container">
-    <h2>Mobile Money Transaction</h2>
+  <div class="glass rounded-3xl shadow-2xl p-8 max-w-md w-full">
+    <div class="text-center mb-8">
+      <i class="fas fa-mobile-alt text-7xl text-yellow-400 mb-4"></i>
+      <h2 class="text-4xl font-bold">MoMo Transaction</h2>
+      <p class="text-purple-200 mt-2 text-lg">Fast • Secure • Reliable</p>
+    </div>
 
-    <form id="momoForm">
-        
-        <!-- NETWORK -->
-        <label for="network">Network</label>
-        <select id="network" required>
-            <option value="" disabled selected>Select Network</option>
-            <option value="MTN">MTN</option>
-            <option value="Vodafone">Vodafone</option>
-            <option value="AirtelTigo">AirtelTigo</option>
+    <form id="momoForm" class="space-y-6">
+
+      <!-- AGENT NAME (LOCKED) -->
+      <div>
+        <label class="block text-lg font-bold mb-2">Agent</label>
+        <input type="text" id="agent-name" class="readonly-input text-center" readonly value="Loading...">
+      </div>
+
+      <!-- TRANSACTION TYPE (DROPDOWN) -->
+      <div>
+        <label class="block text-lg font-bold mb-2">Transaction Type</label>
+        <select id="transaction-type" class="bg-white/20 text-white text-lg required>
+          <option value="" disabled selected>Select Type</option>
+          <option value="deposit">Deposit (Receive Money)</option>
+          <option value="withdraw">Withdrawal (Send Money)</option>
         </select>
+      </div>
 
-        <!-- CUSTOMER NUMBER -->
-        <label for="customerNumber">Customer Number</label>
-        <input type="text" id="customerNumber" placeholder="024 ******" required maxlength="10">
+      <!-- NETWORK -->
+      <div>
+        <label class="block text-lg font-bold mb-2">Network</label>
+        <select id="network" class="bg-white/20 text-white text-lg" required>
+          <option value="" disabled selected>Select Network</option>
+          <option value="MTN">MTN MoMo</option>
+          <option value="Vodafone">Vodafone Cash</option>
+          <option value="AirtelTigo">AirtelTigo Money</option>
+        </select>
+      </div>
 
-        <!-- CUSTOMER NAME (AUTO FILLED FROM DB) -->
-        <label for="customerName">Customer Name</label>
-        <input type="text" id="customerName" readonly placeholder="Fetching name..." required>
+      <!-- CUSTOMER PHONE -->
+      <div>
+        <label class="block text-lg font-bold mb-2">Customer Phone</label>
+        <input type="text" id="customerNumber" placeholder="e.g. 0241234567" maxlength="10" 
+               class="bg-white/20 text-white placeholder-purple-300" required>
+      </div>
 
-        <!-- AMOUNT -->
-        <label for="amount">Amount (GHS)</label>
-        <input type="number" id="amount" placeholder="Enter amount" required>
+      <!-- CUSTOMER NAME (AUTO-FILLED) -->
+      <div>
+        <label class="block text-lg font-bold mb-2">Customer Name</label>
+        <input type="text" id="customerName" readonly placeholder="Auto-filled from system..." 
+               class="bg-white/10">
+      </div>
 
-        <!-- REFERENCE -->
-        <label for="reference">Reference (optional)</label>
-        <input type="text" id="reference" placeholder="Description / Reason">
+      <!-- AMOUNT -->
+      <div>
+        <label class="block text-lg font-bold mb-2">Amount (GHS)</label>
+        <input type="number" id="amount" placeholder="0.00" min="1" step="0.01"
+               class="bg-white/20 text-white" required>
+      </div>
 
-        <button type="submit">Proceed</button>
+      <!-- REFERENCE -->
+      <div>
+        <label class="block text-lg font-bold mb-2">Reference (Optional)</label>
+        <input type="text" id="reference" placeholder="e.g. School fees, Goods" 
+               class="bg-white/20 text-white">
+      </div>
+
+      <!-- SUBMIT BUTTON -->
+      <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-6 rounded-2xl text-2xl font-bold shadow-2xl transition transform hover:scale-105">
+        <i class="fas fa-check-circle mr-4"></i>
+        <span id="submit-text">PROCESS TRANSACTION</span>
+      </button>
     </form>
-</div>
 
-<script src="../js/momo.js"></script>
+    <div class="text-center mt-8">
+      <button onclick="history.back()" class="text-purple-300 hover:text-white text-lg">
+        <i class="fas fa-arrow-left mr-2"></i> Go Back
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Get logged-in agent
+    const currentAgent = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    document.getElementById('agent-name').value = 
+      currentAgent.first_name && currentAgent.last_name 
+        ? `${currentAgent.first_name} ${currentAgent.last_name}` 
+        : currentAgent.username || 'Agent';
+
+    // Update button text based on type
+    document.getElementById('transaction-type').addEventListener('change', function() {
+      const type = this.value;
+      document.getElementById('submit-text').textContent = 
+        type === 'deposit' ? 'RECEIVE MONEY' : 'SEND MONEY';
+    });
+
+    // Auto-fill customer name (replace with real DB call later)
+    async function fetchCustomerName(phone) {
+      const mockDB = {
+        "0541111111": "Kwame Adu",
+        "0242222222": "Ama Serwaa",
+        "0273333333": "Kofi Mensah",
+        "0504444444": "Abena Pokuaa"
+      };
+      return new Promise(resolve => {
+        setTimeout(() => resolve(mockDB[phone] || ""), 300);
+      });
+    }
+
+    document.getElementById("customerNumber").addEventListener("input", async function () {
+      const phone = this.value.trim();
+      if (phone.length === 10 && phone.startsWith("0")) {
+        document.getElementById("customerName").value = "Fetching...";
+        const name = await fetchCustomerName(phone);
+        document.getElementById("customerName").value = name || "Not registered";
+      } else {
+        document.getElementById("customerName").value = "";
+      }
+    });
+
+    // Submit transaction
+    document.getElementById("momoForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const type = document.getElementById("transaction-type").value;
+      const network = document.getElementById("network").value;
+      const phone = document.getElementById("customerNumber").value;
+      const amount = document.getElementById("amount").value;
+      const ref = document.getElementById("reference").value || "MoMo Transaction";
+      const agentName = document.getElementById("agent-name").value;
+
+      if (!type || !network || !phone || !amount) {
+        return Swal.fire("Error", "Please fill all required fields", "error");
+      }
+
+      if (phone.length !== 10 || !phone.startsWith("0")) {
+        return Swal.fire("Error", "Phone must be 10 digits starting with 0", "error");
+      }
+
+      const transactionId = "TXN" + Date.now();
+
+      try {
+        const res = await fetch("http://localhost:8000/withdraw", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone: "233" + phone.slice(1),
+            amount: Number(amount),
+            id: transactionId,
+            type: type,
+            agent_name: agentName,
+            network: network
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.status) {
+          Swal.fire({
+            icon: 'success',
+            title: type === 'deposit' ? 'Deposit Successful!' : 'Withdrawal Successful!',
+            html: `
+              <p class="text-2xl font-bold">GHS ${amount}</p>
+              <p>${type === 'deposit' ? 'Received from' : 'Sent to'}</p>
+              <p class="text-2xl font-bold">${document.getElementById("customerName").value || 'Customer'}</p>
+              <p>Agent: <strong>${agentName}</strong></p>
+              <p>Ref: <strong>${data.referenceId}</strong></p>
+            `,
+            timer: 8000,
+            showConfirmButton: true
+          });
+
+          // Save receipt
+          sessionStorage.setItem('lastTransaction', JSON.stringify({
+            type, network, agent_name: agentName,
+            customer_name: document.getElementById("customerName").value,
+            phone, amount, reference: ref,
+            transactionId, momoRef: data.referenceId,
+            date: new Date().toLocaleString()
+          }));
+
+          setTimeout(() => window.location.href = "receipt.html", 3000);
+        } else {
+          Swal.fire("Failed", data.message || "Transaction failed", "error");
+        }
+      } catch (err) {
+        Swal.fire("Error", "Server not responding. Try again.", "error");
+      }
+    });
+  </script>
 </body>
 </html>

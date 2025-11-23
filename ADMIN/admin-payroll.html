@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payroll & Commission • My MoMo Shop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    body { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .glass { 
+      backdrop-filter: blur(16px) saturate(180%); 
+      background-color: rgba(255, 255, 255, 0.12); 
+      border: 1px solid rgba(255, 255, 255, 0.2); 
+    }
+    .sidebar { 
+      transition: transform 0.3s ease-in-out; 
+    }
+    @media (max-width: 768px) {
+      .sidebar { 
+        transform: translateX(-100%); 
+      }
+      .sidebar.open { 
+        transform: translateX(0); 
+      }
+    }
+  </style>
+</head>
+<body class="text-white min-h-screen">
+
+  <!-- Mobile Menu Button -->
+  <button id="menu-btn" class="md:hidden fixed top-6 left-6 z-50 bg-white/20 p-4 rounded-2xl backdrop-blur-lg shadow-xl">
+    <i class="fas fa-bars text-2xl"></i>
+  </button>
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar fixed md:static inset-y-0 left-0 z-40 w-80 glass shadow-2xl flex flex-col">
+      <div class="p-8 text-center border-b border-white/20">
+        <div class="w-28 h-28 bg-white/20 rounded-full mx-auto mb-4 flex items-center justify-center text-5xl font-bold">
+          A
+        </div>
+        <h2 class="text-3xl font-bold">Welcome Admin</h2>
+        <p class="text-purple-200 mt-2">Queen of the Shop 👑</p>
+      </div>
+
+      <nav class="flex-1 p-6">
+        <ul class="space-y-4">
+          <li>
+            <a href="admin.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition">
+              <i class="fas fa-tachometer-alt text-xl"></i>
+              <span class="text-xl font-medium">Overview</span>
+            </a>
+          </li>
+          <li>
+            <a href="admin-agents.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition">
+              <i class="fas fa-users text-xl"></i>
+              <span class="text-xl font-medium">Manage Agents</span>
+            </a>
+          </li>
+          <li>
+            <a href="admin-float.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition">
+              <i class="fas fa-wallet text-xl"></i>
+              <span class="text-xl font-medium">Float Control</span>
+            </a>
+          </li>
+          <li>
+            <a href="admin-payroll.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl bg-white/20 shadow-lg">
+              <i class="fas fa-money-bill-wave text-xl"></i>
+              <span class="text-xl font-medium">Pay Salaries</span>
+            </a>
+          </li>
+          <li>
+            <a href="admin-reports.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition">
+              <i class="fas fa-chart-bar text-xl"></i>
+              <span class="text-xl font-medium">Reports</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="p-6 border-t border-white/20 text-center">
+        <p class="text-sm opacity-80">© 2025 My MoMo Empire</p>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-8 md:p-12">
+      <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+          <h1 class="text-5xl font-bold">Payroll & Commissions</h1>
+          <button onclick="openBulkPayModal()" class="bg-white/20 p-4 rounded-2xl glass hover:bg-white/30 transition">
+            <i class="fas fa-users text-2xl mr-2"></i> Pay All Commissions
+          </button>
+        </div>
+
+        <!-- Summary -->
+        <div class="glass p-8 rounded-3xl mb-8 text-center">
+          <h2 class="text-3xl font-bold mb-4">Payroll Summary</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <p class="text-purple-200 text-xl">Total Commission Due</p>
+              <p id="total-commission" class="text-6xl font-bold text-yellow-300">GHS 0</p>
+            </div>
+            <div>
+              <p class="text-purple-200 text-xl">Paid This Month</p>
+              <p id="paid-month" class="text-6xl font-bold text-green-400">GHS 0</p>
+            </div>
+            <div>
+              <p class="text-purple-200 text-xl">Agents Ready to Pay</p>
+              <p id="ready-pay" class="text-6xl font-bold text-blue-300">0</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Commission Table -->
+        <div class="glass rounded-3xl overflow-hidden shadow-2xl mb-8">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-white/10">
+                <tr>
+                  <th class="p-6 text-left text-xl font-bold">Agent Name</th>
+                  <th class="p-6 text-left text-xl font-bold">Phone</th>
+                  <th class="p-6 text-left text-xl font-bold">This Month Sales</th>
+                  <th class="p-6 text-left text-xl font-bold">Commission (1.5%)</th>
+                  <th class="p-6 text-left text-xl font-bold">Salary</th>
+                  <th class="p-6 text-left text-xl font-bold">Total Due</th>
+                  <th class="p-6 text-left text-xl font-bold">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="commission-table">
+                <tr>
+                  <td colspan="7" class="p-12 text-center text-purple-300 text-xl">Loading commissions...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Payout History -->
+        <div class="glass rounded-3xl overflow-hidden shadow-2xl">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-white/10">
+                <tr>
+                  <th class="p-6 text-left text-xl font-bold">Date</th>
+                  <th class="p-6 text-left text-xl font-bold">Agent</th>
+                  <th class="p-6 text-left text-xl font-bold">Type</th>
+                  <th class="p-6 text-left text-xl font-bold">Amount</th>
+                  <th class="p-6 text-left text-xl font-bold">Note</th>
+                  <th class="p-6 text-left text-xl font-bold">Status</th>
+                </tr>
+              </thead>
+              <tbody id="payout-history">
+                <tr>
+                  <td colspan="6" class="p-12 text-center text-purple-300 text-xl">No payouts yet</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Bulk Pay Modal -->
+  <div id="bulk-pay-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+    <div class="glass p-10 rounded-3xl max-w-md w-full">
+      <h2 class="text-3xl font-bold text-center mb-8">Pay All Commissions</h2>
+      <form id="bulk-pay-form">
+        <p class="text-purple-200 mb-6">Total to pay: <span id="bulk-total" class="font-bold text-yellow-300">GHS 0</span></p>
+        <input type="text" id="bulk-note" placeholder="Note (e.g. November commissions)" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white mb-8">
+        <div class="flex gap-6">
+          <button type="submit" class="flex-1 bg-purple-600 text-white py-4 rounded-2xl font-bold hover:bg-purple-700">
+            Pay All Now
+          </button>
+          <button type="button" onclick="closeBulkPayModal()" class="flex-1 bg-gray-500 text-white py-4 rounded-2xl">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token') || '';
+
+    async function loadPayroll() {
+      try {
+        const res = await fetch('/api/admin/payroll', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error('Load failed');
+
+        const data = await res.json();
+
+        // Summary
+        document.getElementById('total-commission').textContent = 'GHS ' + Number(data.total_commission || 0).toLocaleString();
+        document.getElementById('paid-month').textContent = 'GHS ' + Number(data.paid_this_month || 0).toLocaleString();
+        document.getElementById('ready-pay').textContent = data.agents_ready || 0;
+        document.getElementById('bulk-total').textContent = 'GHS ' + Number(data.total_commission || 0).toLocaleString();
+
+        // Commission table
+        const tbody = document.getElementById('commission-table');
+        tbody.innerHTML = '';
+        (data.agents || []).forEach(agent => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-white/10';
+          tr.innerHTML = `
+            <td class="p-6 font-bold text-xl">${agent.first_name} ${agent.last_name}</td>
+            <td class="p-6">${agent.phone}</td>
+            <td class="p-6 text-blue-400 text-xl font-bold">GHS ${Number(agent.month_sales || 0).toLocaleString()}</td>
+            <td class="p-6 text-yellow-400 text-xl font-bold">GHS ${Number(agent.commission || 0).toLocaleString()}</td>
+            <td class="p-6 text-green-400 text-xl font-bold">GHS ${Number(agent.salary || 0).toLocaleString()}</td>
+            <td class="p-6 text-purple-400 text-xl font-bold">GHS ${Number((agent.commission + agent.salary) || 0).toLocaleString()}</td>
+            <td class="p-6">
+              <button onclick="payAgent(${agent.id}, '${agent.first_name}')" class="mr-4 text-blue-400 hover:text-blue-200 font-bold">
+                Pay Now
+              </button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+
+        // Payout history
+        const historyTbody = document.getElementById('payout-history');
+        historyTbody.innerHTML = '';
+        (data.history || []).forEach(payout => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-white/10';
+          tr.innerHTML = `
+            <td class="p-6">${new Date(payout.paid_at).toLocaleDateString()}</td>
+            <td class="p-6 font-bold">${payout.agent_name}</td>
+            <td class="p-6">${payout.type}</td>
+            <td class="p-6 text-green-400 font-bold">GHS ${Number(payout.amount).toLocaleString()}</td>
+            <td class="p-6">${payout.note || '-'}</td>
+            <td class="p-6">
+              <span class="px-6 py-2 rounded-full font-bold ${payout.status === 'success' ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'}">
+                ${payout.status}
+              </span>
+            </td>`;
+          historyTbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Payroll load error:', err);
+        document.getElementById('commission-table').innerHTML = '<tr><td colspan="7" class="p-12 text-center text-red-400">Error loading data</td></tr>';
+      }
+    }
+
+    function openBulkPayModal() {
+      document.getElementById('bulk-pay-modal').classList.remove('hidden');
+    }
+
+    function closeBulkPayModal() {
+      document.getElementById('bulk-pay-modal').classList.add('hidden');
+    }
+
+    async function payAgent(agentId, name) {
+      const amount = prompt(`Pay ${name} now? (Enter amount):`, '0');
+      if (amount && !isNaN(amount) && amount > 0) {
+        try {
+          await fetch('/api/admin/payroll/pay', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ agent_id: agentId, amount: Number(amount), type: 'commission' })
+          });
+          loadPayroll();
+          alert('Payment sent!');
+        } catch (err) {
+          alert('Payment failed');
+        }
+      }
+    }
+
+    document.getElementById('bulk-pay-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const note = document.getElementById('bulk-note').value;
+
+      try {
+        await fetch('/api/admin/payroll/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ note })
+        });
+        closeBulkPayModal();
+        loadPayroll();
+        alert('All commissions paid!');
+      } catch (err) {
+        alert('Bulk pay failed');
+      }
+    });
+
+    // Load on page open
+    loadPayroll();
+    setInterval(loadPayroll, 30000);
+
+    // Mobile menu
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+  </script>
+</body>
+</html>

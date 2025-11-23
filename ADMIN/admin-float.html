@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Float Control • My MoMo Shop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .glass { 
+      backdrop-filter: blur(16px) saturate(180%); 
+      background-color: rgba(255, 255, 255, 0.12); 
+      border: 1px solid rgba(255, 255, 255, 0.2); 
+    }
+    .sidebar { 
+      transition: transform 0.3s ease-in-out; 
+    }
+    @media (max-width: 768px) {
+      .sidebar { 
+        transform: translateX(-100%); 
+      }
+      .sidebar.open { 
+        transform: translateX(0); 
+      }
+    }
+    .critical { background: linear-gradient(to top, #ef4444, #f87171); }
+    .low { background: linear-gradient(to top, #f59e0b, #fbbf24); }
+    .healthy { background: linear-gradient(to top, #10b981, #34d399); }
+  </style>
+</head>
+<body class="text-white min-h-screen">
+
+  <!-- Mobile Menu Button -->
+  <button id="menu-btn" class="md:hidden fixed top-6 left-6 z-50 bg-white/20 p-4 rounded-2xl backdrop-blur-lg shadow-xl">
+    <i class="fas fa-bars text-2xl"></i>
+  </button>
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar fixed md:static inset-y-0 left-0 z-40 w-80 glass shadow-2xl flex flex-col">
+      <div class="p-8 text-center border-b border-white/20">
+        <div class="w-28 h-28 bg-white/20 rounded-full mx-auto mb-4 flex items-center justify-center text-5xl font-bold">
+          A
+        </div>
+        <h2 class="text-3xl font-bold">Welcome Admin</h2>
+        <p class="text-purple-200 mt-2">Queen of the Shop 👑</p>
+      </div>
+
+      <nav class="flex-1 p-6">
+        <ul class="space-y-4">
+          <li>
+            <a href="admin.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition">
+              <i class="fas fa-tachometer-alt text-xl"></i>
+              <span class="text-xl font-medium">Overview</span>
+            </a>
+          </li>
+          <li>
+            <a href="admin-agents.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition">
+              <i class="fas fa-users text-xl"></i>
+              <span class="text-xl font-medium">Manage Agents</span>
+            </a>
+          </li>
+          <li>
+            <a href="admin-float.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl bg-white/20 shadow-lg">
+              <i class="fas fa-wallet text-xl"></i>
+              <span class="text-xl font-medium">Float Control</span>
+            </a>
+          </li>
+          <li>
+            <a href="admin-payroll.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition">
+              <i class="fas fa-money-bill-wave text-xl"></i>
+              <span class="text-xl font-medium">Pay Salaries</span>
+            </a>
+          </li>
+          <li>
+            <a href="admin-reports.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition">
+              <i class="fas fa-chart-bar text-xl"></i>
+              <span class="text-xl font-medium">Reports</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="p-6 border-t border-white/20 text-center">
+        <p class="text-sm opacity-80">© 2025 My MoMo Empire</p>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-8 md:p-12">
+      <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+          <h1 class="text-5xl font-bold">Float Control</h1>
+          <button onclick="openTopupModal()" class="bg-white/20 p-4 rounded-2xl glass hover:bg-white/30 transition">
+            <i class="fas fa-plus text-2xl mr-2"></i> Load Float
+          </button>
+        </div>
+
+        <!-- Shop Float Summary -->
+        <div class="glass p-8 rounded-3xl mb-8 text-center">
+          <h2 class="text-4xl font-bold mb-4">Shop Float Summary</h2>
+          <div class="grid grid-cols-3 gap-8">
+            <div>
+              <p class="text-purple-200 text-xl">Total Float</p>
+              <p id="total-float" class="text-6xl font-bold">GHS 0</p>
+            </div>
+            <div>
+              <p class="text-purple-200 text-xl">Loaded Today</p>
+              <p id="loaded-today" class="text-6xl font-bold text-green-400">GHS 0</p>
+            </div>
+            <div>
+              <p class="text-purple-200 text-xl">Used Today</p>
+              <p id="used-today" class="text-6xl font-bold text-red-400">GHS 0</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Low Float Alerts -->
+        <div class="glass p-6 rounded-3xl mb-8">
+          <h2 class="text-3xl font-bold mb-4">Low Float Alerts</h2>
+          <div id="low-float-list" class="space-y-4">
+            <p class="text-center text-purple-300">No agents with low float</p>
+          </div>
+        </div>
+
+        <!-- Agent Float Table -->
+        <div class="glass rounded-3xl overflow-hidden shadow-2xl">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-white/10">
+                <tr>
+                  <th class="p-6 text-left text-xl font-bold">Agent Name</th>
+                  <th class="p-6 text-left text-xl font-bold">Phone</th>
+                  <th class="p-6 text-left text-xl font-bold">Current Float</th>
+                  <th class="p-6 text-left text-xl font-bold">Today's Usage</th>
+                  <th class="p-6 text-left text-xl font-bold">Status</th>
+                  <th class="p-6 text-left text-xl font-bold">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="agents-float-table">
+                <tr>
+                  <td colspan="6" class="p-12 text-center text-purple-300 text-xl">Loading agents...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Top-Up Modal -->
+  <div id="topup-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+    <div class="glass p-10 rounded-3xl max-w-md w-full">
+      <h2 class="text-3xl font-bold text-center mb-8">Top-Up Agent Float</h2>
+      <form id="topup-form">
+        <select id="topup-agent" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white mb-6" required>
+          <option value="">Select Agent</option>
+        </select>
+        <input type="number" id="topup-amount" placeholder="Amount (GHS)" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white mb-6" required min="1000">
+        <input type="text" id="topup-note" placeholder="Note (optional)" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white mb-8">
+        <div class="flex gap-6">
+          <button type="submit" class="flex-1 bg-purple-600 text-white py-4 rounded-2xl font-bold hover:bg-purple-700">
+            Load Float
+          </button>
+          <button type="button" onclick="closeTopupModal()" class="flex-1 bg-gray-500 text-white py-4 rounded-2xl">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token') || '';
+
+    async function loadFloatData() {
+      const res = await fetch('/api/admin/float', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+
+      // Shop summary
+      document.getElementById('total-float').textContent = 'GHS ' + Number(data.total_float || 0).toLocaleString();
+      document.getElementById('loaded-today').textContent = 'GHS ' + Number(data.loaded_today || 0).toLocaleString();
+      document.getElementById('used-today').textContent = 'GHS ' + Number(data.used_today || 0).toLocaleString();
+
+      // Low float alerts
+      const lowList = document.getElementById('low-float-list');
+      lowList.innerHTML = '';
+      if (data.low_agents.length === 0) {
+        lowList.innerHTML = '<p class="text-center text-purple-300">No agents with low float</p>';
+      } else {
+        data.low_agents.forEach(agent => {
+          const div = document.createElement('div');
+          div.className = 'bg-red-500/20 p-6 rounded-2xl flex justify-between items-center';
+          div.innerHTML = `
+            <div>
+              <p class="font-bold">${agent.name}</p>
+              <p class="text-sm text-purple-300">${agent.phone}</p>
+            </div>
+            <span class="text-red-400 font-bold text-xl">GHS ${Number(agent.balance).toLocaleString()}</span>`;
+          lowList.appendChild(div);
+        });
+      }
+
+      // Agent table
+      const tbody = document.getElementById('agents-float-table');
+      tbody.innerHTML = '';
+      data.agents.forEach(agent => {
+        const statusClass = agent.balance < 50000 ? 'critical' : agent.balance < 150000 ? 'low' : 'healthy';
+        const statusText = agent.balance < 50000 ? 'CRITICAL' : agent.balance < 150000 ? 'LOW' : 'HEALTHY';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-white/10';
+        tr.innerHTML = `
+          <td class="p-6 font-bold text-xl">${agent.first_name} ${agent.last_name}</td>
+          <td class="p-6">${agent.phone}</td>
+          <td class="p-6 text-xl font-bold ${statusClass === 'critical' ? 'text-red-400' : statusClass === 'low' ? 'text-yellow-400' : 'text-green-400'}">
+            GHS ${Number(agent.balance).toLocaleString()}
+          </td>
+          <td class="p-6 text-blue-400 font-bold">GHS ${Number(agent.today_usage || 0).toLocaleString()}</td>
+          <td class="p-6">
+            <span class="px-6 py-2 rounded-full font-bold ${statusClass === 'critical' ? 'critical' : statusClass === 'low' ? 'low' : 'healthy'}">
+              ${statusText}
+            </span>
+          </td>
+          <td class="p-6">
+            <button onclick="topupAgent(${agent.id}, '${agent.first_name}')" class="text-blue-400 hover:text-blue-200 font-bold mr-4">
+              Top-Up
+            </button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+
+      // Fill top-up dropdown
+      const select = document.getElementById('topup-agent');
+      select.innerHTML = '<option value="">Select Agent</option>';
+      data.agents.forEach(agent => {
+        const opt = document.createElement('option');
+        opt.value = agent.id;
+        opt.textContent = `${agent.first_name} ${agent.last_name} - Current: GHS ${Number(agent.balance).toLocaleString()}`;
+        select.appendChild(opt);
+      });
+    }
+
+    function openTopupModal() {
+      document.getElementById('topup-modal').classList.remove('hidden');
+    }
+
+    function closeTopupModal() {
+      document.getElementById('topup-modal').classList.add('hidden');
+    }
+
+    async function topupAgent(agentId, name) {
+      const amount = prompt(`Top-up float for ${name} (GHS):`, '50000');
+      if (amount && !isNaN(amount) && amount > 0) {
+        await fetch('/api/admin/float/topup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ agent_id: agentId, amount: Number(amount) })
+        });
+        loadFloatData();
+      }
+    }
+
+    document.getElementById('topup-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const agentId = document.getElementById('topup-agent').value;
+      const amount = document.getElementById('topup-amount').value;
+      const note = document.getElementById('topup-note').value;
+
+      await fetch('/api/admin/float/topup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ agent_id: agentId, amount: Number(amount), note })
+      });
+
+      closeTopupModal();
+      loadFloatData();
+    });
+
+    // Load on page open
+    loadFloatData();
+    setInterval(loadFloatData, 30000);
+
+    // Mobile menu
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+  </script>
+</body>
+</html>

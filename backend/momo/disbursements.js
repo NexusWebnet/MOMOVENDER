@@ -1,44 +1,44 @@
+// momo/disbursements.js
 const axios = require("axios");
 const { v4: uuidv4 } = require("uuid");
-require("dotenv").config();
 const generateDisToken = require("./token");
 
-async function sendWithdrawal(phone, amount, transactionId) {
+async function sendWithdrawal(phone, amount, externalId) {
+  const token = await generateDisToken();
+  if (!token) return null;
 
-    const token = await generateDisToken();
-    if (!token) return null;
+  const referenceId = uuidv4();
 
-    const referenceId = uuidv4();
+  const url = "https://sandbox.momodeveloper.mtn.com/disbursement/v1_0/transfer";
 
-    const url = "https://sandbox.momodeveloper.mtn.com/disbursement/v1_0/transfer";
+  const payload = {
+    amount: amount.toString(),
+    currency: "GHS",
+    externalId: externalId || "test-" + Date.now(),
+    payee: {
+      partyIdType: "MSISDN",
+      partyId: phone.startsWith("233") ? phone : "233" + phone.replace(/^0/, ""),
+    },
+    payerMessage: "MoMo Shop Withdrawal",
+    payeeNote: "Payment from shop",
+  };
 
-    const body = {
-        amount: amount.toString(),
-        currency: "GHS",
-        externalId: transactionId,
-        payee: {
-            partyIdType: "MSISDN",
-            partyId: phone
-        },
-        payerMessage: "Withdrawal",
-        payeeNote: "Employee withdrawal"
-    };
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    "X-Reference-Id": referenceId,
+    "X-Target-Environment": "sandbox",
+    "Ocp-Apim-Subscription-Key": process.env.DIS_PRIMARY_KEY,
+    "Content-Type": "application/json",
+  };
 
-    const headers = {
-        "Authorization": `Bearer ${token}`,
-        "X-Reference-Id": referenceId,
-        "X-Target-Environment": process.env.MOMO_ENV,
-        "Ocp-Apim-Subscription-Key": process.env.DIS_PRIMARY_KEY,
-        "Content-Type": "application/json"
-    };
-
-    try {
-        await axios.post(url, body, { headers });
-        return referenceId;
-    } catch (e) {
-        console.error("DISBURSE ERROR:", e.response?.data || e.message);
-        return null;
-    }
+  try {
+    await axios.post(url, payload, { headers });
+    console.log("SUCCESS: GHS", amount, "sent to", phone, "| Ref:", referenceId);
+    return referenceId;
+  } catch (err) {
+    console.error("DISBURSE FAILED:", err.response?.data || err.message);
+    return null;
+  }
 }
 
 module.exports = { sendWithdrawal };

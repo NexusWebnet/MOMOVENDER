@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../config/db"); // your DB connection
+const db = require("../config/db"); // your MySQL connection
+const bcrypt = require('bcryptjs');
 
 // SEND NOTIFICATION
 router.post("/send", (req, res) => {

@@ -1,163 +1,262 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MoMo Banking Transactions</title>
-    <link rel="stylesheet" href="../css/transactions.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome for icons -->
-    <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Branch Transactions - MoMo Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
-<body>
-    <div class="container">
-      <header class="header">
-        <div class="header-top">
-         <i class="fas fa-bars header-icon left" onclick="toggleMenu()"></i>
-         <h1>Welcome, Nana!</h1>
-         <i class="fas fa-bell header-icon right"></i>
-        </div>
+<body class="bg-orange-50 min-h-screen">
 
-  <div class="search-bar">
-    <i class="fas fa-search"></i>
-    <input type="text" placeholder="Search transactions...">
+  <div class="bg-gradient-to-r from-orange-600 to-orange-700 text-white p-6 shadow-xl">
+    <div class="max-w-7xl mx-auto">
+      <h1 class="text-4xl font-bold">Branch Transactions</h1>
+      <p id="branch-name" class="text-xl mt-2">Loading branch...</p>
+    </div>
   </div>
-</header>
-    
 
-  <div class="sidebar" id="sidebar">
-            <div class="menu-header">
-                <h3>Menu</h3>
-                <i class="fas fa-times close-btn" onclick="toggleMenu()"></i>
-            </div>
-            <ul class="menu-list">
-                <li class="menu-item" onclick="navigate('dashboard')">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </li>
-                <li class="menu-item" onclick="navigate('transaction')">
-                    <i class="fas fa-exchange-alt"></i>
-                    <span>Transaction</span>
-                </li>
-                <li class="menu-item" onclick="navigate('history')">
-                    <i class="fas fa-history"></i>
-                    <span>History</span>
-                </li>
-                <li class="menu-item" onclick="navigate('profile')">
-                    <i class="fas fa-user"></i>
-                    <span>Profile</span>
-                </li>
-                <li class="menu-item" onclick="navigate('notifications')">
-                    <i class="fas fa-bell"></i>
-                    <span>Notifications</span>
-                </li>
-                <li class="menu-item" onclick="navigate('withdrawal')">
-                    <i class="fas fa-money-bill-wave"></i>
-                    <span>Withdrawal</span>
-                </li>
-            </ul>
+  <div class="max-w-7xl mx-auto p-6 grid lg:grid-cols-4 gap-6">
+    <!-- Filters Sidebar -->
+    <div class="lg:col-span-1 space-y-6">
+      <div class="bg-white rounded-2xl shadow-md p-6">
+        <h3 class="font-bold text-lg mb-4">Filters</h3>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Date Range</label>
+            <input type="date" id="start-date" class="w-full px-3 py-2 border rounded-lg">
+            <input type="date" id="end-date" class="w-full px-3 py-2 border rounded-lg mt-2">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Agent</label>
+            <select id="agent-filter" class="w-full px-3 py-2 border rounded-lg">
+              <option value="">All Agents</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Service Type</label>
+            <select id="type-filter" class="w-full px-3 py-2 border rounded-lg">
+              <option value="">All Services</option>
+              <option value="deposit">Deposit</option>
+              <option value="withdraw">Withdrawal</option>
+              <option value="transfer">Transfer</option>
+              <option value="payment">Bill Payment</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Payment Method</label>
+            <select id="method-filter" class="w-full px-3 py-2 border rounded-lg">
+              <option value="">All</option>
+              <option value="momo">MoMo</option>
+              <option value="bank">Bank</option>
+            </select>
+          </div>
+
+          <button onclick="applyFilters()" class="w-full bg-orange-600 text-white py-3 rounded-lg font-bold hover:bg-orange-700">
+            Apply Filters
+          </button>
+          <button onclick="printReport()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 mt-2">
+            <i class="fas fa-print mr-2"></i> Print Report
+          </button>
+          <button onclick="exportExcel()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 mt-2">
+            <i class="fas fa-file-excel mr-2"></i> Export Excel
+          </button>
         </div>
+      </div>
 
-
-        <section class="quick-records">
-            <h3>Quick Records</h3>
-            <div class="record-container">
-                <div class="record-card" data-type="bank">
-                    <i class="fas fa-university"></i>
-                    <span>Bank Records</span>
-                    <button class="record-btn">View</button>
-                </div>
-                <div class="record-card" data-type="mobile">
-                    <i class="fas fa-mobile-alt"></i>
-                    <span>Mobile Transaction Records</span>
-                    <button class="record-btn">View</button>
-                </div>
-            </div>
-            <div class="record-container">
-                <div class="record-card" data-type="susu">
-                    <i class="fas fa-piggy-bank"></i>
-                    <span>Susu Records</span>
-                    <button class="record-btn">View</button>
-                </div>
-                <div class="record-card" data-type="business">
-                    <i class="fas fa-briefcase"></i>
-                    <span>Business Expenses Records</span>
-                    <button class="record-btn">View</button>
-                </div>
-            </div>
-        </section>
-
-        <section class="recent-transactions">
-            <h3>Recent Transactions</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Int'l Deposit</td>
-                        <td>+300</td>
-                        <td><span class="status completed">Completed</span></td>
-                        <td>2025-10-15</td>
-                    </tr>
-                    <tr>
-                        <td>Int'l Deposit</td>
-                        <td>+300</td>
-                        <td><span class="status completed">Completed</span></td>
-                        <td>2025-10-15</td>
-                    </tr>
-                    <tr>
-                        <td>Int'l Deposit</td>
-                        <td>+300</td>
-                        <td><span class="status completed">Completed</span></td>
-                        <td>2025-10-15</td>
-                    </tr>
-                    <tr>
-                        <td>Int'l Deposit</td>
-                        <td>+300</td>
-                        <td><span class="status completed">Completed</span></td>
-                        <td>2025-10-15</td>
-                    </tr>
-                    <tr>
-                        <td>Int'l Deposit</td>
-                        <td>-200</td>
-                        <td><span class="status cancelled">Cancelled</span></td>
-                        <td>2025-10-14</td>
-                    </tr>
-                    <tr>
-                        <td>Int'l Deposit</td>
-                        <td>+200</td>
-                        <td><span class="status completed">Completed</span></td>
-                        <td>2025-10-13</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
+      <div class="bg-white rounded-2xl shadow-md p-6">
+        <h3 class="font-bold text-lg mb-4">Quick Stats</h3>
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between"><span>Total Volume</span><strong id="total-vol">GHS 0</strong></div>
+          <div class="flex justify-between"><span>Transactions</span><strong id="total-count">0</strong></div>
+          <div class="flex justify-between"><span>Avg Transaction</span><strong id="avg-amt">GHS 0</strong></div>
+          <div class="flex justify-between text-green-600"><span>MoMo Volume</span><strong id="momo-vol">GHS 0</strong></div>
+          <div class="flex justify-between text-blue-600"><span>Bank Volume</span><strong id="bank-vol">GHS 0</strong></div>
+        </div>
+      </div>
     </div>
 
-    <nav class="bottom-nav">
-        <a href="index.html" class="nav-item" data-section="dashboard">
-            <i class="fas fa-home"></i>
-            <span>Dashboard</span>
-        </a>
-        <a href="transactions.html" class="nav-item" data-section="transaction" class="active">
-            <i class="fas fa-exchange-alt"></i>
-            <span>Transaction</span>
-        </a>
-        <a href="filter_transaction.html" class="nav-item" data-section="history">
-            <i class="fas fa-history"></i>
-            <span>History</span>
-        </a>
-        <a href="profile.html" class="nav-item" data-section="profile">
-            <i class="fas fa-user"></i>
-            <span>Profile</span>
-        </a>
-    </nav>
+    <!-- Main Content -->
+    <div class="lg:col-span-3 space-y-6">
+      <!-- Charts -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl shadow-md p-6">
+          <h3 class="font-bold text-lg mb-4">Daily Trend</h3>
+          <canvas id="dailyChart"></canvas>
+        </div>
+        <div class="bg-white rounded-2xl shadow-md p-6">
+          <h3 class="font-bold text-lg mb-4">Top Agents</h3>
+          <canvas id="topAgentsChart"></canvas>
+        </div>
+      </div>
 
-    <script src="../js/transactions.js"></script>
+      <!-- Transactions Table -->
+      <div class="bg-white rounded-2xl shadow-md overflow-hidden">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h2 class="text-xl font-bold">All Transactions</h2>
+          <input type="text" id="search" placeholder="Search phone/name..." class="px-4 py-2 border rounded-lg">
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full" id="transactions-table">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date/Time</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Agent</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              </tr>
+            </thead>
+            <tbody id="tx-body" class="divide-y divide-gray-200">
+              <!-- Filled by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    let allTxns = [];
+    let chart1, chart2;
+
+    async function loadTransactions() {
+      const res = await fetch('/api/manager/transactions/full', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+
+      document.getElementById('branch-name').textContent = data.branch.name + ' Branch Transactions';
+
+      allTxns = data.transactions;
+
+      // Populate agent filter
+      const agentSel = document.getElementById('agent-filter');
+      agentSel.innerHTML = '<option value="">All Agents</option>';
+      data.agents.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = a.first_name + ' ' + a.last_name;
+        agentSel.appendChild(opt);
+      });
+
+      renderTable(allTxns);
+      updateStats(allTxns);
+      drawCharts(data.dailyTrend, data.topAgents);
+    }
+
+    function renderTable(txns) {
+      const tbody = document.getElementById('tx-body');
+      tbody.innerHTML = '';
+      txns.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="px-6 py-4 text-sm">${new Date(t.created_at).toLocaleString()}</td>
+          <td class="px-6 py-4 text-sm font-medium">${t.agent_name || 'Unknown'}</td>
+          <td class="px-6 py-4 text-sm">${t.transaction_type}</td>
+          <td class="px-6 py-4 text-sm font-bold text-green-600">GHS ${Number(t.amount).toLocaleString()}</td>
+          <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs ${t.payment_method === 'momo' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'}">${t.payment_method.toUpperCase()}</span></td>
+          <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs ${t.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${t.status}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateStats(txns) {
+      const total = txns.reduce((s, t) => s + Number(t.amount), 0);
+      const momo = txns.filter(t => t.payment_method === 'momo').reduce((s, t) => s + Number(t.amount), 0);
+      document.getElementById('total-vol').textContent = 'GHS ' + total.toLocaleString();
+      document.getElementById('total-count').textContent = txns.length;
+      document.getElementById('avg-amt').textContent = 'GHS ' + (total / txns.length || 0).toFixed(0);
+      document.getElementById('momo-vol').textContent = 'GHS ' + momo.toLocaleString();
+      document.getElementById('bank-vol').textContent = 'GHS ' + (total - momo).toLocaleString();
+    }
+
+    function drawCharts(daily, top) {
+      if (chart1) chart1.destroy();
+      chart1 = new Chart(document.getElementById('dailyChart'), {
+        type: 'line',
+        data: {
+          labels: daily.map(d => d.date),
+          datasets: [{
+            label: 'Daily Volume (GHS)',
+            data: daily.map(d => d.total),
+            borderColor: '#fb923c',
+            backgroundColor: 'rgba(251,146,60,0.2)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: { responsive: true }
+      });
+
+      if (chart2) chart2.destroy();
+      chart2 = new Chart(document.getElementById('topAgentsChart'), {
+        type: 'bar',
+        data: {
+          labels: top.map(a => a.agent_name.split(' ')[0]),
+          datasets: [{
+            label: 'Sales (GHS)',
+            data: top.map(a => a.total),
+            backgroundColor: '#fb923c'
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      });
+    }
+
+    function applyFilters() {
+      let filtered = allTxns;
+
+      const start = document.getElementById('start-date').value;
+      const end = document.getElementById('end-date').value;
+      const agent = document.getElementById('agent-filter').value;
+      const type = document.getElementById('type-filter').value;
+      const method = document.getElementById('method-filter').value;
+      const search = document.getElementById('search').value.toLowerCase();
+
+      if (start) filtered = filtered.filter(t => new Date(t.created_at) >= new Date(start));
+      if (end) filtered = filtered.filter(t => new Date(t.created_at) <= new Date(end + 'T23:59:59'));
+      if (agent) filtered = filtered.filter(t => t.sender_id == agent);
+      if (type) filtered = filtered.filter(t => t.transaction_type === type);
+      if (method) filtered = filtered.filter(t => t.payment_method === method);
+      if (search) filtered = filtered.filter(t => 
+        (t.customer_phone?.toLowerCase().includes(search) || t.agent_name?.toLowerCase().includes(search))
+      );
+
+      renderTable(filtered);
+      updateStats(filtered);
+    }
+
+    function printReport() {
+      window.print();
+    }
+
+    function exportExcel() {
+      let csv = 'Date,Agent,Type,Amount,Method,Status\n';
+      allTxns.forEach(t => {
+        csv += `${new Date(t.created_at).toLocaleString()},${t.agent_name},"${t.transaction_type}",${t.amount},${t.payment_method.toUpperCase()},${t.status}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `transactions_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+
+    // Load on start
+    loadTransactions();
+    setInterval(loadTransactions, 30000); // Refresh every 30s
+  </script>
 </body>
 </html>

@@ -1,23 +1,26 @@
+// momo/token.js
 const axios = require("axios");
 require("dotenv").config();
 
 async function generateDisToken() {
-    const url = "https://sandbox.momodeveloper.mtn.com/disbursement/token/";
+  const url = "https://sandbox.momodeveloper.mtn.com/disbursement/token/";
 
-    const headers = {
-        "Authorization": "Basic " + Buffer.from(
-            process.env.DIS_API_USER + ":" + process.env.DIS_API_KEY
-        ).toString("base64"),
-        "Ocp-Apim-Subscription-Key": process.env.DIS_PRIMARY_KEY
-    };
+  const auth = Buffer.from(
+    `${process.env.DIS_API_USER}:${process.env.DIS_API_KEY}`
+  ).toString("base64");
 
-    try {
-        const response = await axios.post(url, {}, { headers });
-        return response.data.access_token;
-    } catch (error) {
-        console.error("TOKEN ERROR:", error.response?.data || error.message);
-        return null;
-    }
+  try {
+    const res = await axios.post(url, {}, {
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Ocp-Apim-Subscription-Key": process.env.DIS_PRIMARY_KEY,
+      },
+    });
+    return res.data.access_token;
+  } catch (err) {
+    console.error("TOKEN ERROR:", err.response?.data || err.message);
+    return null;
+  }
 }
 
 module.exports = generateDisToken;

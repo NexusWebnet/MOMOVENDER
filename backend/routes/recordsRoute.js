@@ -1,55 +1,70 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../config/db"); // Ensure this points to your MySQL connection
+const db = require("../config/db"); // your MySQL connection
+const bcrypt = require('bcryptjs');
 
-// ✅ Get user transaction records
-router.get("/records/:id", async (req, res) => {
-  const { id } = req.params;
-  const { type, role } = req.query;
+// GET /api/records/:userId?type=&role=
+router.get("/records/:userId", async (req, res) => {
+    const { userId } = req.params;
+    const { type, role } = req.query;
 
-  try {
-    let query = `
-      SELECT t.*, 
-             CONCAT(u.first_name, ' ', u.last_name) AS sender_name,
-             CONCAT(r.first_name, ' ', r.last_name) AS receiver_name
-      FROM transactions t
-      JOIN users u ON t.sender_id = u.user_id
-      JOIN users r ON t.receiver_id = r.user_id
-    `;
-    const params = [];
+    try {
+        let query = `
+            SELECT 
+                t.transaction_id,
+                t.transaction_type,
+                t.payment_method,
+                t.amount,
+                t.status,
+                t.created_at,
+                t.user_id,
+                t.store_id
+            FROM transactions t
+            WHERE 1=1
+        `;
+        
+        const params = [];
 
-    if (role === "admin") {
-      // Admin can view all transactions, filtered by type
-      if (type === "momo") {
-        query += " WHERE t.payment_method = 'momo'";
-      } else if (type === "bank") {
-        query += " WHERE t.payment_method = 'bank'";
-      } else if (type === "sim") {
-        query += " WHERE t.transaction_type = 'sim_sale'";
-      } // else type === "transaction" or all => no WHERE, show all
-    } else {
-      // Employees/managers see only their own transactions
-      query += " WHERE (t.sender_id = ? OR t.receiver_id = ?)";
-      params.push(id, id);
+        // FILTER BY RECORD TYPE
+        if (type && type !== "transaction") {
+            query += ` AND t.transaction_type = ? `;
+            params.push(type);
+        }
 
-      if (type === "momo") {
-        query += " AND t.payment_method = 'momo'";
-      } else if (type === "bank") {
-        query += " AND t.payment_method = 'bank'";
-      } else if (type === "sim") {
-        query += " AND t.transaction_type = 'sim_sale'";
-      }
+        // ROLE FILTERING
+        if (role === "user") {
+            query += ` AND t.user_id = ? `;
+            params.push(userId);
+        } 
+        else if (role === "manager") {
+            // Get store_id the manager manages
+            const [managerRow] = await db.query(
+                "SELECT store_id FROM users WHERE id = ? LIMIT 1",
+                [userId]
+            );
+
+            if (!managerRow || managerRow.length === 0) {
+                return res.json([]);
+            }
+
+            const storeId = managerRow[0].store_id;
+
+            query += ` AND t.store_id = ? `;
+            params.push(storeId);
+        }
+        else if (role === "admin") {
+            // ❗ Admin sees all — NO filter added
+        }
+
+        query += " ORDER BY t.created_at DESC";
+
+        const [rows] = await db.query(query, params);
+        res.json(rows);
+
+    } catch (err) {
+        console.error("❌ Error fetching records:", err);
+        res.status(500).json({ error: "Internal server error" });
     }
-
-    query += " ORDER BY t.created_at DESC";
-
-    // Execute the query
-    const [rows] = await db.execute(query, params);
-    res.json(rows);
-  } catch (err) {
-    console.error("❌ Error fetching records:", err);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
 });
 
 module.exports = router;

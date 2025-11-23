@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agents & Performance - MoMo Vendor Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-orange-50 min-h-screen">
+
+  <div class="bg-gradient-to-r from-orange-600 to-orange-700 text-white p-6 shadow-lg">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold">Agents Management & Performance</h1>
+        <p id="branch-info" class="text-orange-100">Loading branch...</p>
+      </div>
+      <button onclick="openAddModal()" class="bg-white text-orange-600 px-6 py-3 rounded-xl font-bold hover:bg-orange-100 transition">
+        <i class="fas fa-plus mr-2"></i> Add Agent
+      </button>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto p-6 grid lg:grid-cols-3 gap-8">
+    <!-- Agents Table -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-2xl shadow-md overflow-hidden">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h2 class="text-xl font-bold">All Agents</h2>
+          <input type="text" id="search" placeholder="Search agents..." class="px-4 py-2 border rounded-lg">
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Today Sales</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="agents-body" class="bg-white divide-y divide-gray-200">
+              <!-- Filled by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Charts -->
+    <div class="space-y-6">
+      <div class="bg-white rounded-2xl shadow-md p-6">
+        <h3 class="text-lg font-bold mb-4">Top Performers This Week</h3>
+        <canvas id="topAgentsChart"></canvas>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-md p-6">
+        <h3 class="text-lg font-bold mb-4">Daily Sales Trend</h3>
+        <canvas id="salesTrendChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div id="agentModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+      <h2 id="modal-title" class="text-2xl font-bold mb-6">Add New Agent</h2>
+      <form id="agentForm">
+        <input type="hidden" id="edit-id">
+        <div class="grid grid-cols-2 gap-4">
+          <input type="text" id="first_name" placeholder="First Name" required class="px-4 py-3 border rounded-xl">
+          <input type="text" id="last_name" placeholder="Last Name" required class="px-4 py-3 border rounded-xl">
+        </div>
+        <input type="text" id="username" placeholder="Username" required class="w-full px-4 py-3 border rounded-xl mt-4">
+        <input type="text" id="phone" placeholder="Phone" required class="w-full px-4 py-3 border rounded-xl mt-4">
+        <input type="password" id="password" placeholder="Password (leave blank to keep)" class="w-full px-4 py-3 border rounded-xl mt-4">
+        <div class="flex gap-4 mt-6">
+          <button type="submit" class="flex-1 bg-orange-600 text-white py-3 rounded-xl font-bold hover:bg-orange-700">Save</button>
+          <button type="button" onclick="closeModal()" class="flex-1 bg-gray-200 py-3 rounded-xl font-bold">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    let chart1, chart2;
+
+    async function loadPage() {
+      const res = await fetch('/api/manager-agents-full', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const { branch, agents, topThisWeek, salesTrend } = await res.json();
+
+      document.getElementById('branch-info').textContent = `${branch.name} Branch • ${branch.location || ''}`;
+
+      const tbody = document.getElementById('agents-body');
+      tbody.innerHTML = '';
+      agents.forEach(a => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-gray-900">${a.first_name} ${a.last_name}</div>
+            <div class="text-sm text-gray-500">@${a.username}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">${a.phone}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+            GHS ${Number(a.today_sales || 0).toLocaleString()}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${a.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              ${a.status || 'active'}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <button onclick="editAgent(${a.id})" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+            <button onclick="deleteAgent(${a.id}, '${a.first_name}')" class="text-red-600 hover:text-red-900">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Charts
+      if (chart1) chart1.destroy();
+      chart1 = new Chart(document.getElementById('topAgentsChart'), {
+        type: 'bar',
+        data: {
+          labels: topThisWeek.map(x => x.name.split(' ')[0]),
+          datasets: [{
+            label: 'Sales (GHS)',
+            data: topThisWeek.map(x => x.total),
+            backgroundColor: '#fb923c'
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      });
+
+      if (chart2) chart2.destroy();
+      chart2 = new Chart(document.getElementById('salesTrendChart'), {
+        type: 'line',
+        data: {
+          labels: salesTrend.map(x => x.date),
+          datasets: [{
+            label: 'Branch Daily Sales',
+            data: salesTrend.map(x => x.total),
+            borderColor: '#fb923c',
+            tension: 0.4,
+            fill: true,
+            backgroundColor: 'rgba(251, 146, 60, 0.2)'
+          }]
+        },
+        options: { responsive: true }
+      });
+    }
+
+    // Modal functions
+    function openAddModal() {
+      document.getElementById('modal-title').textContent = 'Add New Agent';
+      document.getElementById('agentForm').reset();
+      document.getElementById('edit-id').value = '';
+      document.getElementById('agentModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('agentModal').classList.add('hidden');
+    }
+
+    async function editAgent(id) {
+      const res = await fetch(`/api/agents/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const agent = await res.json();
+      document.getElementById('modal-title').textContent = 'Edit Agent';
+      document.getElementById('edit-id').value = agent.id;
+      document.getElementById('first_name').value = agent.first_name;
+      document.getElementById('last_name').value = agent.last_name;
+      document.getElementById('username').value = agent.username;
+      document.getElementById('phone').value = agent.phone;
+      document.getElementById('password').placeholder = 'Leave blank to keep current';
+      openAddModal();
+    }
+
+    async function deleteAgent(id, name) {
+      if (!confirm(`Delete agent ${name}? This cannot be undone!`)) return;
+      await fetch(`/api/agents/${id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      loadPage();
+    }
+
+    document.getElementById('agentForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-id').value;
+      const payload = {
+        first_name: document.getElementById('first_name').value,
+        last_name: document.getElementById('last_name').value,
+        username: document.getElementById('username').value,
+        phone: document.getElementById('phone').value,
+        password: document.getElementById('password').value || undefined
+      };
+
+      await fetch(id ? `/api/agents/${id}` : '/api/api/agents', {
+        method: id ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+
+      closeModal();
+      loadPage();
+    };
+
+    // Search
+    document.getElementById('search').addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      document.querySelectorAll('#agents-body tr').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(term) ? '' : 'none';
+      });
+    });
+
+    // Load on start + refresh every 15s
+    loadPage();
+    setInterval(loadPage, 15000);
+  </script>
+</body>
+</html>

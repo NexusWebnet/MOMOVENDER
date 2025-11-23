@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
+const bcrypt = require('bcryptjs');
 
 // ✅ save chat + store as notification
 router.post("/send", async (req, res) => {

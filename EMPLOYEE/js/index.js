@@ -36,6 +36,66 @@ document.addEventListener("DOMContentLoaded", () => {
   updateNotificationBadge();
 });
 
+// ---------------- Load recent transactions for logged-in user ----------------
+async function loadRecentTransactions(type = "transaction") {
+  const user = getCurrentUser();
+  if (!user) return;
+
+  try {
+    let url = `http://localhost:8000/api/records/${user.id}?type=${type}&role=${user.role}`;
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to fetch recent transactions");
+
+    const data = await res.json();
+    const tbody = document.getElementById("transaction-body");
+    tbody.innerHTML = "";
+
+    if (data && data.length > 0) {
+      data.slice(0, 20).forEach(tx => {
+        const row = document.createElement("div");
+        row.className = "table-row";
+        row.innerHTML = `
+          <span>${tx.transaction_type || "Unknown"}</span>
+          <span>GHC ${Number(tx.amount || 0).toFixed(2)}</span>
+          <span>${new Date(tx.created_at).toLocaleString()}</span>
+        `;
+        tbody.appendChild(row);
+      });
+    } else {
+      tbody.innerHTML = `
+        <div class="table-row">
+          <span style="text-align:center; width:100%; color:gray;">No transactions found</span>
+        </div>
+      `;
+    }
+  } catch (err) {
+    console.warn("Recent transactions fetch failed:", err);
+    const tbody = document.getElementById("transaction-body");
+    tbody.innerHTML = `
+      <div class="table-row">
+        <span style="text-align:center; width:100%; color:red;">Error loading transactions</span>
+      </div>
+    `;
+  }
+}
+
+function goToRecords(type) {
+  const user = getCurrentUser();
+  if (!user) {
+    alert("Please login first.");
+    window.location.href = "../login.html";
+    return;
+  }
+
+  localStorage.setItem("recordType", type);
+  localStorage.setItem("userRole", user.role);
+  localStorage.setItem("userId", user.id);
+
+  window.location.href = "../../records.html";
+}
+
+
 // -------------- Navigation --------------
 function navigate(pageName) {
   if (!pageName) return;
@@ -82,7 +142,8 @@ async function loadDashboardData() {
     }
 
     // Load recent transactions for logged-in user
-    loadRecentTransactions(); // top 20, all types initially
+    loadRecentTransactions("transaction");
+ // top 20, all types initially
   } catch (err) {
     console.warn("Unable to fetch dashboard data:", err);
   }

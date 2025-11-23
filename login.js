@@ -104,10 +104,10 @@ document.querySelector('.login-form').addEventListener('submit', async function(
 
             switch (data.role) {
                 case "admin":
-                    window.location.href = "../admin/dashboard.html";
+                    window.location.href = "ADMIN/admin.html";
                     break;
                 case "manager":
-                    window.location.href = "../manager/pages/index.html";
+                    window.location.href = "MANAGER/pages/Dashboard.html";
                     break;
                 case "employee":
                     window.location.href = "EMPLOYEE/pages/index.html";

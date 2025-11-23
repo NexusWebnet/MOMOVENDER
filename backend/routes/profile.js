@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../config/db");
+const db = require("../config/db"); // your MySQL connection
+const bcrypt = require('bcryptjs');
 
 // ✅ GET USER PROFILE DATA
 router.get("/:id", (req, res) => {

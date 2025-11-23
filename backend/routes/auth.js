@@ -2,12 +2,16 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
+const jwt = require("jsonwebtoken");
+const SECRET = "BANKING_SECRET_KEY"; // You can move this to .env later
 
-// ✅ REGISTER USER
+// -------------------------
+// REGISTER USER
+// -------------------------
 router.post("/register", (req, res) => {
     const { first_name, last_name, email, phone, role, password } = req.body;
 
-    const username = last_name.toLowerCase() + phone.slice(-4); // auto-generate username
+    const username = last_name.toLowerCase() + phone.slice(-4);
 
     const sql = `INSERT INTO users (first_name, last_name, username, email, phone, role, password)
                  VALUES (?, ?, ?, ?, ?, ?, ?)`;
@@ -19,7 +23,10 @@ router.post("/register", (req, res) => {
     });
 });
 
-// ✅ LOGIN USER + record login history
+
+// -------------------------
+// LOGIN + JWT TOKEN
+// -------------------------
 router.post("/login", (req, res) => {
     const { emailOrUsername, password, device_info, ip_address } = req.body;
 
@@ -34,14 +41,20 @@ router.post("/login", (req, res) => {
 
         const user = results[0];
 
-        // Record login history
+        // Generate a JWT token
+        const token = jwt.sign(
+            { id: user.id, role: user.role },
+            SECRET,
+            { expiresIn: "7d" }
+        );
+
+        // Login history
         const historySql = `INSERT INTO login_history (user_id, device_info, ip_address) VALUES (?, ?, ?)`;
-        db.query(historySql, [user.id, device_info || "Unknown", ip_address || "Unknown"], (err2) => {
-            if (err2) console.error("Login history error:", err2.sqlMessage);
-        });
+        db.query(historySql, [user.id, device_info || "Unknown", ip_address || "Unknown"]);
 
         res.json({
             success: true,
+            token,
             role: user.role,
             first_name: user.first_name,
             last_name: user.last_name,
@@ -50,4 +63,29 @@ router.post("/login", (req, res) => {
     });
 });
 
-module.exports = router;
+
+// -------------------------
+// AUTH MIDDLEWARE
+// -------------------------
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) return res.sendStatus(401);
+
+    jwt.verify(token, SECRET, (err, user) => {
+        if (err) return res.sendStatus(403);
+
+        req.user = user; // Attach decoded user data
+        next();
+    });
+}
+
+
+// -------------------------
+// EXPORT ROUTER + MIDDLEWARE
+// -------------------------
+module.exports = {
+    router,
+    authenticateToken
+};
