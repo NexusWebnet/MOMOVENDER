@@ -1,184 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MoMo Banking App</title>
-    <link rel="stylesheet" href="../css/index.css">
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Employee Dashboard</title>
+  <link rel="stylesheet" href="../css/index.css">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
 
-        <!-- HEADER -->
-        <header class="header">
-            <div class="header-top">
-                <i class="fas fa-bars header-icon left" onclick="toggleMenu()"></i>
-                <h1 id="welcomeText">Welcome!</h1>
+<div class="app-container">
 
-                <!-- ✅ Notification bell now navigates to notification page -->
-                <i class="fas fa-bell header-icon right" onclick="navigate('notifications')">
-                    <span id="notificationBadge" class="badge"></span>
-                </i>
-            </div>
+  
 
-            <div class="search-bar">
-                <i class="fas fa-search"></i>
-                <input id="searchInput" type="text" placeholder="Search transactions...">
-            </div>
-        </header>
+ <!-- LEFT SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="menu-header">
+    <h3>Menu</h3>
+    <i class="fas fa-times close-btn mobile-only" id="closeMenu"></i>
+  </div>
 
-
-        <div class="send-box">
-          <select id="receiverSelect"></select> <!-- List of users -->
-          <input type="text" id="messageInput" placeholder="Type your message..." />
-          <button onclick="sendNotification()">Send</button>
-        </div>
+  <ul class="menu-list">
+    <li class="menu-item active"><i class="fas fa-home"></i> Dashboard</li>
+    <li class="menu-item" onclick="navigate('momo_transaction')"><i class="fas fa-mobile-alt"></i> Mobile Money</li>
+    <li class="menu-item" onclick="navigate('bank_deposite')"><i class="fas fa-university"></i> Bank Deposit</li>
+    <li class="menu-item" onclick="navigate('bank_withdrawal')"><i class="fas fa-money-bill-wave"></i> Withdrawal</li>
+   
+    
+    
+    <li class="menu-item" onclick="navigate('history')"><i class="fas fa-history"></i> History</li>
+    <li class="menu-item" onclick="navigate('profile')"><i class="fas fa-user"></i> Profile</li>
+  </ul>
+</aside>
 
 
-        <!-- SIDEBAR -->
-        <div class="sidebar" id="sidebar">
-            <div class="menu-header">
-                <h3>Menu</h3>
-                <i class="fas fa-times close-btn" onclick="toggleMenu()"></i>
-            </div>
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <header class="header">
+      <div class="header-top">
+      <i class="fas fa-bars hamburger mobile-only" onclick="toggleSidebar()"></i>
+        <h1 id="welcomeText">Welcome!</h1>
+        <i class="fas fa-bell header-icon right" onclick="navigate('notifications')">
+          <span id="notificationBadge" class="badge">0</span>
+        </i>
+      </div>
+      <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search transactions..." id="searchInput">
+      </div>
+    </header>
 
-            <ul class="menu-list">
-                <li class="menu-item" onclick="navigate('index')"><i class="fas fa-home"></i><span>Dashboard</span></li>
-                <li class="menu-item" onclick="navigate('transaction')"><i class="fas fa-exchange-alt"></i><span>Transaction</span></li>
-                <li class="menu-item" onclick="navigate('history')"><i class="fas fa-history"></i><span>History</span></li>
-                <li class="menu-item" onclick="navigate('profile')"><i class="fas fa-user"></i><span>Profile</span></li>
-                <li class="menu-item" onclick="navigate('notifications')"><i class="fas fa-bell"></i><span>Notifications</span></li>
-                <li class="menu-item" onclick="navigate('withdrawal')"><i class="fas fa-money-bill-wave"></i><span>Withdrawal</span></li>
-            </ul>
-        </div>
-
-        <!-- CARDS -->
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-exchange-alt card-icon"></i>
-                <h2>Total Transactions Today</h2>
-            </div>
-            <p class="amount">GHC 3000.00</p>
-            <p class="change">-10% vs yesterday</p>
-            <i class="fas fa-arrow-right card-arrow" onclick="goToRecords('transaction')"></i>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-mobile-alt card-icon"></i>
-                <h2>Mobile Money Transactions</h2>
-            </div>
-            <p class="amount">GHC 3000.00</p>
-            <p class="change">-10% vs yesterday</p>
-            <i class="fas fa-arrow-right card-arrow" onclick="goToRecords('momo')"></i>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-university card-icon"></i>
-                <h2>Bank Transactions</h2>
-            </div>
-            <p class="amount">15</p>
-            <p class="change">-10% vs yesterday</p>
-            <i class="fas fa-arrow-right card-arrow" onclick="goToRecords('bank')"></i>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-sim-card card-icon"></i>
-                <h2>Sim Card Sales</h2>
-            </div>
-            <p class="amount">15</p>
-            <p class="change">-10% vs yesterday</p>
-            <i class="fas fa-arrow-right card-arrow" onclick="goToRecords('sim')"></i>
-        </div>
-
-        <!-- BUTTON CARDS -->
-        <div class="buttons-sections">
-            <div class="button-row">
-                <div class="button-card" data-form="bank-deposit" onclick="navigate('bank_deposite')">
-                    <i class="fas fa-university"></i><span>Bank Deposit</span>
-                </div>
-
-                <div class="button-card" data-form="withdrawal" onclick="navigate('bank_withdrawal')">
-                    <i class="fas fa-money-bill-wave"></i><span>Withdrawal</span>
-                </div>
-
-                <div class="button-card" data-form="registration" onclick="navigate('registration')">
-                    <i class="fas fa-user-plus"></i><span>Registration</span>
-                </div>
-            </div>
-
-            <div class="button-row">
-                <div class="button-card" onclick="navigate('momo_transaction')">
-                    <i class="fas fa-mobile-alt"></i><span>Mobile Money</span>
-                </div>
-
-                <div class="button-card" onclick="navigate('susu')">
-                    <i class="fas fa-piggy-bank"></i><span>Susu</span>
-                </div>
-
-                <div class="button-card" onclick="navigate('airtime')">
-                    <i class="fas fa-phone-volume"></i><span>Airtime</span>
-                </div>
-            </div>
-        </div>
-
-        <h3>Transactions History</h3>
-        <h4>Recent Transactions</h4>
-
-        <div class="transaction-table">
-            <div class="table-header">
-                <span>Type</span>
-                <span>Amount</span>
-                <span>Date/Time</span>
-            </div>
-
-            <div class="table-body" id="transaction-body">
-                <div class="table-row"><span>Internal Deposit</span><span>300</span><span>2023-10-11</span></div>
-                <div class="table-row"><span>Access Deposit</span><span>200</span><span>2023-10-11</span></div>
-                <div class="table-row"><span>Access Deposit</span><span>200</span><span>2023-10-11</span></div>
-            </div>
-        </div>
-
+    <!-- 2x2 CARDS GRID -->
+    <div class="cards-grid">
+      <div class="card"><div class="card-content"><i class="fas fa-exchange-alt card-icon"></i><h2>Total Today</h2><p class="amount" id="totalToday">GHC 0.00</p></div></div>
+      <div class="card"><div class="card-content"><i class="fas fa-mobile-alt card-icon"></i><h2>MoMo</h2><p class="amount" id="momoToday">GHC 0.00</p></div></div>
+      <div class="card"><div class="card-content"><i class="fas fa-university card-icon"></i><h2>Bank</h2><p class="amount" id="bankToday">0</p></div></div>
+      <div class="card"><div class="card-content"><i class="fas fa-sim-card card-icon"></i><h2>Sim Sales</h2><p class="amount" id="simToday">0</p></div></div>
     </div>
 
-    <!-- NAVIGATION FOOTER -->
-    <nav class="bottom-nav">
-        <a href="index.html" class="nav-item active"><i class="fas fa-home"></i><span>Dashboard</span></a>
-        <a href="transactions.html" class="nav-item"><i class="fas fa-exchange-alt"></i><span>Transaction</span></a>
-        <a href="filter_transaction.html" class="nav-item"><i class="fas fa-history"></i><span>History</span></a>
-        <a href="profile.html" class="nav-item"><i class="fas fa-user"></i><span>Profile</span></a>
-    </nav>
+    <!-- QUICK ACTIONS -->
+    <div class="buttons-sections">
+      <div class="button-row">
+        <div class="button-card" onclick="navigate('bank_deposite')"><i class="fas fa-university"></i><span>Bank Deposit</span></div>
+        <div class="button-card" onclick="navigate('bank_withdrawal')"><i class="fas fa-money-bill-wave"></i><span>Withdrawal</span></div>
+        <div class="button-card" onclick="navigate('registration')"><i class="fas fa-user-plus"></i><span>Registration</span></div>
+      </div>
+      <div class="button-row">
+        <div class="button-card" onclick="navigate('momo_transaction')"><i class="fas fa-mobile-alt"></i><span>Mobile Money</span></div>
+        <div class="button-card" onclick="navigate('susu')"><i class="fas fa-piggy-bank"></i><span>Susu</span></div>
+        <div class="button-card" onclick="navigate('airtime')"><i class="fas fa-phone-volume"></i><span>Airtime</span></div>
+      </div>
+    </div>
 
-    <script src="../js/index.js"></script>
+   <h3>Transaction History</h3>
+<h4>All Recent Transactions</h4>
 
-    <script>
-        // Set welcome text from localStorage
-        const user = JSON.parse(localStorage.getItem("user"));
-        if (user) document.getElementById("welcomeText").textContent = `Welcome, ${user.first_name} ${user.last_name}!`;
+<div class="transaction-table">
+  <div class="table-header">
+    <span>Customer & Type</span>
+    <span>Amount</span>
+    <span>Date & Time</span>
+    <span>Source</span>
+  </div>
+      <div class="table-body" id="transactionBody"></div>
+    </div>
+  </main>
 
-        // ✅ Search filter
-        document.getElementById("searchInput").addEventListener("input", function (e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll("#transaction-body .table-row");
+  <!-- RIGHT PANEL -->
+  <aside class="right-panel">
+    <h3>Recent Notifications</h3>
+    <div id="notificationsList">Loading...</div>
+  </aside>
+</div>
 
-            rows.forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(searchTerm) ? "" : "none";
-            });
-        });
+<!-- <nav class="bottom-nav mobile-only">
+  <a href="index.html" class="nav-item active"><i class="fas fa-home"></i><span>Dashboard</span></a>
+  <a href="momo_transaction.html" class="nav-item"><i class="fas fa-mobile-alt"></i><span>MoMo</span></a>
+  <a href="history.html" class="nav-item"><i class="fas fa-history"></i><span>History</span></a>
+  <a href="profile.html" class="nav-item"><i class="fas fa-user"></i><span>Profile</span></a>
+</nav> -->
 
-        // ✅ Navigation function
-        function navigate(page) {
-            window.location.href = page + ".html";
-        }
-
-        // ✅ Sidebar toggle
-        function toggleMenu() {
-            document.getElementById("sidebar").classList.toggle("active");
-        }
-    </script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="../js/index.js"></script>
 </body>
 </html>

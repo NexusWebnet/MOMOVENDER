@@ -11,211 +11,319 @@
     body { 
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
       font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
     }
-    .glass { 
+
+    /* Glass morphism card */
+    .glass-card { 
       backdrop-filter: blur(16px) saturate(180%); 
-      background-color: rgba(255, 255, 255, 0.12); 
-      border: 1px solid rgba(255, 255, 255, 0.2); 
+      background-color: rgba(255, 255, 255, 0.15); 
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
     }
+
+    /* Purple glass header style you requested */
+    .glass-header {
+      background: rgba(78, 52, 226, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+
+    /* Input & Select Styling - Fixed dropdown visibility */
+    select, input[type="text"], input[type="number"] {
+      background-color: rgba(255, 255, 255, 0.2) !important;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white !important;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-size: 1.1rem;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    select:focus, input:focus {
+      background-color: rgba(255, 255, 255, 0.3) !important;
+      border-color: #a78bfa;
+      box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.3);
+    }
+
+    /* Placeholder color */
+    ::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Fix dropdown arrow color in some browsers */
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      background-size: 12px;
+    }
+
+    /* Readonly input */
     .readonly-input {
-      background-color: rgba(255,255,255,0.2) !important;
+      background-color: rgba(255,255,255,0.25) !important;
       color: white !important;
       font-weight: bold;
       cursor: not-allowed;
-    }
-    select, input {
-      @apply w-full px-6 py-4 rounded-2xl bg-white/20 text-white text-lg;
+      text-align: center;
     }
   </style>
 </head>
-<body class="text-white min-h-screen flex items-center justify-center p-4">
+<body class="text-white flex items-center justify-center p-4 min-h-screen">
 
-  <div class="glass rounded-3xl shadow-2xl p-8 max-w-md w-full">
-    <div class="text-center mb-8">
-      <i class="fas fa-mobile-alt text-7xl text-yellow-400 mb-4"></i>
-      <h2 class="text-4xl font-bold">MoMo Transaction</h2>
-      <p class="text-purple-200 mt-2 text-lg">Fast • Secure • Reliable</p>
+  <div class="glass-card rounded-3xl w-full max-w-md overflow-hidden">
+    
+    <!-- Header with your requested purple glass style -->
+    <div class="glass-header text-center py-8 px-6">
+      <i class="fas fa-mobile-alt text-6xl text-yellow-300 mb-3"></i>
+      <h2 class="text-3xl font-bold">MoMo Transaction</h2>
+      <p class="text-purple-200 text-lg">Fast • Secure • Reliable</p>
     </div>
 
-    <form id="momoForm" class="space-y-6">
+    <div class="p-8">
+      <form id="momoForm" class="space-y-6">
 
-      <!-- AGENT NAME (LOCKED) -->
-      <div>
-        <label class="block text-lg font-bold mb-2">Agent</label>
-        <input type="text" id="agent-name" class="readonly-input text-center" readonly value="Loading...">
+        <!-- AGENT NAME (LOCKED) -->
+        <div>
+          <label class="block text-sm font-semibold mb-2 text-purple-200">Agent</label>
+          <input type="text" id="agent-name" class="readonly-input w-full" readonly value="Loading...">
+        </div>
+
+        <!-- TRANSACTION TYPE -->
+        <div>
+          <label class="block text-sm font-semibold mb-2 text-purple-200">Transaction Type</label>
+          <select id="transaction-type" class="w-full" required>
+            <option value="" disabled selected>Select Type</option>
+            <option value="deposit">Deposit (Receive Money)</option>
+            <option value="withdraw">Withdrawal (Send Money)</option>
+          </select>
+        </div>
+
+        <!-- NETWORK -->
+        <div>
+          <label class="block text-sm font-semibold mb-2 text-purple-200">Network</label>
+          <select id="network" class="w-full" required>
+            <option value="" disabled selected>Select Network</option>
+            <option value="MTN">MTN MoMo</option>
+            <option value="Vodafone">Vodafone Cash</option>
+            <option value="AirtelTigo">AirtelTigo Money</option>
+          </select>
+        </div>
+
+        <!-- CUSTOMER PHONE -->
+        <div>
+          <label class="block text-sm font-semibold mb-2 text-purple-200">Customer Phone</label>
+          <input type="text" id="customerNumber" placeholder="e.g. 0241234567" maxlength="10" required>
+        </div>
+
+        <!-- CUSTOMER NAME (AUTO-FILLED) -->
+        <div>
+          <label class="block text-sm font-semibold mb-2 text-purple-200">Customer Name</label>
+          <input type="text" id="customerName" readonly placeholder="Auto-filled from system..." class="bg-white/10">
+        </div>
+
+        <!-- AMOUNT -->
+        <div>
+          <label class="block text-sm font-semibold mb-2 text-purple-200">Amount (GHS)</label>
+          <input type="number" id="amount" placeholder="0.00" min="1" step="0.01" required>
+        </div>
+
+        <!-- REFERENCE -->
+        <div>
+          <label class="block text-sm font-semibold mb-2 text-purple-200">Reference (Optional)</label>
+          <input type="text" id="reference" placeholder="e.g. School fees, Goods">
+        </div>
+
+        <!-- SUBMIT BUTTON - Smaller & Better Sized -->
+        <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 rounded-xl text-xl transition transform hover:scale-105 shadow-xl mt-8">
+          <i class="fas fa-paper-plane mr-3"></i>
+          <span id="submit-text">PROCESS TRANSACTION</span>
+        </button>
+      </form>
+
+      <div class="text-center mt-6">
+        <button onclick="history.back()" class="text-purple-300 hover:text-white text-sm">
+          <i class="fas fa-arrow-left mr-2"></i> Go Back
+        </button>
       </div>
-
-      <!-- TRANSACTION TYPE (DROPDOWN) -->
-      <div>
-        <label class="block text-lg font-bold mb-2">Transaction Type</label>
-        <select id="transaction-type" class="bg-white/20 text-white text-lg required>
-          <option value="" disabled selected>Select Type</option>
-          <option value="deposit">Deposit (Receive Money)</option>
-          <option value="withdraw">Withdrawal (Send Money)</option>
-        </select>
-      </div>
-
-      <!-- NETWORK -->
-      <div>
-        <label class="block text-lg font-bold mb-2">Network</label>
-        <select id="network" class="bg-white/20 text-white text-lg" required>
-          <option value="" disabled selected>Select Network</option>
-          <option value="MTN">MTN MoMo</option>
-          <option value="Vodafone">Vodafone Cash</option>
-          <option value="AirtelTigo">AirtelTigo Money</option>
-        </select>
-      </div>
-
-      <!-- CUSTOMER PHONE -->
-      <div>
-        <label class="block text-lg font-bold mb-2">Customer Phone</label>
-        <input type="text" id="customerNumber" placeholder="e.g. 0241234567" maxlength="10" 
-               class="bg-white/20 text-white placeholder-purple-300" required>
-      </div>
-
-      <!-- CUSTOMER NAME (AUTO-FILLED) -->
-      <div>
-        <label class="block text-lg font-bold mb-2">Customer Name</label>
-        <input type="text" id="customerName" readonly placeholder="Auto-filled from system..." 
-               class="bg-white/10">
-      </div>
-
-      <!-- AMOUNT -->
-      <div>
-        <label class="block text-lg font-bold mb-2">Amount (GHS)</label>
-        <input type="number" id="amount" placeholder="0.00" min="1" step="0.01"
-               class="bg-white/20 text-white" required>
-      </div>
-
-      <!-- REFERENCE -->
-      <div>
-        <label class="block text-lg font-bold mb-2">Reference (Optional)</label>
-        <input type="text" id="reference" placeholder="e.g. School fees, Goods" 
-               class="bg-white/20 text-white">
-      </div>
-
-      <!-- SUBMIT BUTTON -->
-      <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-6 rounded-2xl text-2xl font-bold shadow-2xl transition transform hover:scale-105">
-        <i class="fas fa-check-circle mr-4"></i>
-        <span id="submit-text">PROCESS TRANSACTION</span>
-      </button>
-    </form>
-
-    <div class="text-center mt-8">
-      <button onclick="history.back()" class="text-purple-300 hover:text-white text-lg">
-        <i class="fas fa-arrow-left mr-2"></i> Go Back
-      </button>
     </div>
   </div>
 
-  <script>
-    // Get logged-in agent
-    const currentAgent = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    document.getElementById('agent-name').value = 
-      currentAgent.first_name && currentAgent.last_name 
-        ? `${currentAgent.first_name} ${currentAgent.last_name}` 
-        : currentAgent.username || 'Agent';
+<script>
+  // ──────────────────────────────────────────────────────────────
+  // 1. Load Agent Name (very robust – works with any login system)
+  // ──────────────────────────────────────────────────────────────
+  document.addEventListener("DOMContentLoaded", function () {
+    const agentField = document.getElementById('agent-name');
 
-    // Update button text based on type
-    document.getElementById('transaction-type').addEventListener('change', function() {
-      const type = this.value;
-      document.getElementById('submit-text').textContent = 
-        type === 'deposit' ? 'RECEIVE MONEY' : 'SEND MONEY';
-    });
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const agentData   = JSON.parse(localStorage.getItem('agent') || '{}');
+    const user        = JSON.parse(localStorage.getItem('user') || '{}');
 
-    // Auto-fill customer name (replace with real DB call later)
-    async function fetchCustomerName(phone) {
-      const mockDB = {
-        "0541111111": "Kwame Adu",
-        "0242222222": "Ama Serwaa",
-        "0273333333": "Kofi Mensah",
-        "0504444444": "Abena Pokuaa"
-      };
-      return new Promise(resolve => {
-        setTimeout(() => resolve(mockDB[phone] || ""), 300);
-      });
+    let fullName = "Agent";
+
+    if (currentUser && Object.keys(currentUser).length) {
+      fullName = currentUser.name ||
+                 (currentUser.first_name && currentUser.last_name
+                   ? `${currentUser.first_name} ${currentUser.last_name}`
+                   : currentUser.username || currentUser.email || "Agent");
+    }
+    else if (agentData && (agentData.name || agentData.first_name)) {
+      fullName = agentData.name || `${agentData.first_name || ''} ${agentData.last_name || ''}`.trim();
+    }
+    else if (user && (user.name || user.username)) {
+      fullName = user.name || user.username || user.email || "Agent";
     }
 
-    document.getElementById("customerNumber").addEventListener("input", async function () {
-      const phone = this.value.trim();
-      if (phone.length === 10 && phone.startsWith("0")) {
-        document.getElementById("customerName").value = "Fetching...";
-        const name = await fetchCustomerName(phone);
-        document.getElementById("customerName").value = name || "Not registered";
-      } else {
-        document.getElementById("customerName").value = "";
-      }
-    });
+    agentField.value = fullName.trim() || "My MoMo Agent";
+  });
 
-    // Submit transaction
-    document.getElementById("momoForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
+  // ──────────────────────────────────────────────────────────────
+  // 2. Change button text when transaction type is selected
+  // ──────────────────────────────────────────────────────────────
+  document.getElementById('transaction-type').addEventListener('change', function () {
+    const text = this.value === 'deposit' ? 'RECEIVE MONEY' : 'SEND MONEY';
+    document.getElementById('submit-text').textContent = text;
+  });
 
-      const type = document.getElementById("transaction-type").value;
-      const network = document.getElementById("network").value;
-      const phone = document.getElementById("customerNumber").value;
-      const amount = document.getElementById("amount").value;
-      const ref = document.getElementById("reference").value || "MoMo Transaction";
-      const agentName = document.getElementById("agent-name").value;
+  // ──────────────────────────────────────────────────────────────
+  // 3. Auto-fill customer name (mock – replace with real API later)
+  // ──────────────────────────────────────────────────────────────
+  async function fetchCustomerName(phone) {
+    const mockDB = {
+      "0541111111": "Kwame Adu",
+      "0242222222": "Ama Serwaa",
+      "0273333333": "Kofi Mensah",
+      "0504444444": "Abena Pokuaa"
+    };
+    await new Promise(r => setTimeout(r, 400));
+    return mockDB[phone] || "";
+  }
 
-      if (!type || !network || !phone || !amount) {
-        return Swal.fire("Error", "Please fill all required fields", "error");
-      }
+  document.getElementById("customerNumber").addEventListener("input", async function () {
+    const phone = this.value.trim();
+    const nameField = document.getElementById("customerName");
 
-      if (phone.length !== 10 || !phone.startsWith("0")) {
-        return Swal.fire("Error", "Phone must be 10 digits starting with 0", "error");
-      }
+    if (phone.length === 10 && phone.startsWith("0")) {
+      nameField.value = "Fetching name...";
+      const name = await fetchCustomerName(phone);
+      nameField.value = name || "Not registered";
+    } else {
+      nameField.value = "";
+    }
+  });
 
-      const transactionId = "TXN" + Date.now();
+  // ──────────────────────────────────────────────────────────────
+  // 4. Form Submit – Main Transaction Logic
+  // ──────────────────────────────────────────────────────────────
+  document.getElementById("momoForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
 
-      try {
-        const res = await fetch("http://localhost:8000/withdraw", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phone: "233" + phone.slice(1),
-            amount: Number(amount),
-            id: transactionId,
-            type: type,
-            agent_name: agentName,
-            network: network
-          })
-        });
+    const type      = document.getElementById("transaction-type").value;
+    const network   = document.getElementById("network").value;
+    const phone     = document.getElementById("customerNumber").value.trim();
+    const amount    = document.getElementById("amount").value;
+    const ref       = document.getElementById("reference").value.trim() || "MoMo Transaction";
+    const agentName = document.getElementById("agent-name").value;
 
-        const data = await res.json();
+    // ─── Validation ───
+    if (!type || !network || !phone || !amount) {
+      return Swal.fire({icon: 'warning', title: 'Missing Fields', text: 'Please fill all required fields'});
+    }
+    if (!/^0\d{9}$/.test(phone)) {
+      return Swal.fire({icon: 'error', title: 'Invalid Phone', text: 'Must be 10 digits starting with 0'});
+    }
 
-        if (data.status) {
-          Swal.fire({
-            icon: 'success',
-            title: type === 'deposit' ? 'Deposit Successful!' : 'Withdrawal Successful!',
-            html: `
-              <p class="text-2xl font-bold">GHS ${amount}</p>
-              <p>${type === 'deposit' ? 'Received from' : 'Sent to'}</p>
-              <p class="text-2xl font-bold">${document.getElementById("customerName").value || 'Customer'}</p>
-              <p>Agent: <strong>${agentName}</strong></p>
-              <p>Ref: <strong>${data.referenceId}</strong></p>
-            `,
-            timer: 8000,
-            showConfirmButton: true
-          });
+    const transactionId = "TXN" + Date.now();
 
-          // Save receipt
+    try {
+      const res = await fetch("http://localhost:8000/withdraw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: "233" + phone.slice(1),
+          amount: Number(amount),
+          id: transactionId,
+          type: type,
+          agent_name: agentName,
+          network: network,
+          reference: ref
+        })
+      });
+
+      const data = await res.json();
+
+      // ─── SUCCESS ───
+      if (data.status) {
+        Swal.fire({
+          icon: 'success',
+          title: type === 'deposit' ? 'Money Received Successfully!' : 'Money Sent Successfully!',
+          html: `
+            <div class="text-center">
+              <p class="text-3xl font-bold text-green-400 mb-2">GHS ${amount}</p>
+              <p class="text-lg">${type === 'deposit' ? 'Received from' : 'Sent to'}</p>
+              <p class="text-2xl font-bold text-white mt-1">
+                ${document.getElementById("customerName").value || phone}
+              </p>
+              <div class="mt-4 text-sm opacity-90">
+                <p>Agent: <strong>${agentName}</strong></p>
+                <p>Network: <strong>${network}</strong></p>
+                <p>Ref: <strong>${data.referenceId || transactionId}</strong></p>
+              </div>
+            </div>
+          `,
+          timer: 10000,
+          timerProgressBar: true,
+          showConfirmButton: true,
+          confirmButtonText: 'View Receipt',
+          confirmButtonColor: '#10b981',
+          background: '#1f2937',
+          color: '#e5e7eb',
+          customClass: { popup: 'rounded-2xl shadow-2xl' }
+        }).then((result) => {
+          // Save receipt and go to receipt page
           sessionStorage.setItem('lastTransaction', JSON.stringify({
-            type, network, agent_name: agentName,
-            customer_name: document.getElementById("customerName").value,
-            phone, amount, reference: ref,
-            transactionId, momoRef: data.referenceId,
-            date: new Date().toLocaleString()
+            type,
+            network,
+            agent_name: agentName,
+            customer_name: document.getElementById("customerName").value || "Customer",
+            customer_phone: phone,
+            amount,
+            reference: ref,
+            transactionId,
+            momoRef: data.referenceId || transactionId,
+            date: new Date().toLocaleString(),
+            status: 'success'
           }));
 
-          setTimeout(() => window.location.href = "receipt.html", 3000);
-        } else {
-          Swal.fire("Failed", data.message || "Transaction failed", "error");
-        }
-      } catch (err) {
-        Swal.fire("Error", "Server not responding. Try again.", "error");
+          if (result.isConfirmed || result.dismiss === Swal.DismissReason.timer) {
+            window.location.href = "reciept.html";
+          }
+        });
+
+      // ─── FAILURE ───
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Transaction Failed',
+          text: data.message || "Please try again later."
+        });
       }
-    });
-  </script>
+
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Connection Error',
+        text: 'Cannot reach server. Check your internet connection.'
+      });
+    }
+  });
+</script>
 </body>
 </html>

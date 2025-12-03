@@ -1,172 +1,225 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Transaction Receipt</title>
-
-<style>
-  * {
-    margin: 0;
-    padding: 0;
-    font-family: "Poppins", sans-serif;
-  }
-
-  body {
-    background: #f2f4f7;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 15px;
-  }
-
-  .receipt-container {
-    width: 100%;
-    max-width: 400px;
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-  }
-
-  .header {
-    text-align: center;
-    margin-bottom: 15px;
-  }
-
-  .logo {
-    width: 70px;
-    height: 70px;
-    object-fit: cover;
-    border-radius: 50%;
-    margin-bottom: 10px;
-  }
-
-  .header h2 {
-    font-size: 18px;
-    font-weight: bold;
-  }
-
-  .section {
-    padding: 12px 0;
-  }
-
-  .row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    font-size: 14px;
-  }
-
-  .row span:first-child {
-    font-weight: 600;
-  }
-
-  #qrcode {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-  }
-
-  .btn-print {
-    width: 100%;
-    max-width: 400px;
-    background: #6a5acd;
-    color: white;
-    text-align: center;
-    padding: 14px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-  }
-
-  .btn-print:hover {
-    background: #5a4ccf;
-  }
-
-  @media print {
-    .btn-print, body {
-      visibility: hidden;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction Receipt • My MoMo Shop</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .receipt-container, .receipt-container * {
-      visibility: visible;
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      font-family: 'Poppins', sans-serif;
+      color: #333;
     }
-  }
-</style>
+
+    .receipt-container {
+      width: 100%;
+      max-width: 420px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .header {
+      background: #6a5acd;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.3);
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+
+    .header h2 {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-top: 5px;
+    }
+
+    .success-badge {
+      background: #10b981;
+      color: white;
+      font-weight: bold;
+      padding: 8px 20px;
+      border-radius: 50px;
+      display: inline-block;
+      margin: 15px auto;
+      font-size: 14px;
+    }
+
+    .section {
+      padding: 20px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      font-size: 15px;
+      border-bottom: 1px dashed #eee;
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .row span:first-child {
+      font-weight: 600;
+      color: #555;
+    }
+
+    .amount {
+      font-size: 28px !important;
+      font-weight: 800 !important;
+      color: #10b981 !important;
+    }
+
+    #qrcode {
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+
+    .btn-print {
+      width: 100%;
+      max-width: 420px;
+      background: #6a5acd;
+      color: white;
+      font-weight: bold;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 4px 15px rgba(106, 90, 205, 0.4);
+    }
+
+    .btn-print:hover {
+      background: #5a4bcf;
+      transform: translateY(-2px);
+    }
+
+    @media print {
+      body, .btn-print { display: none; }
+      .receipt-container {
+        box-shadow: none;
+        margin: 0;
+        max-width: none;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<!-- RECEIPT -->
-<div class="receipt-container" id="receiptArea">
-  <div class="header">
-    <img src="https://i.ibb.co/bb8q9qS/logo.png" alt="Logo" class="logo">
-    <h2>Transaction Receipt</h2>
-    <p>Thank you for using our service</p>
+  <div class="receipt-container" id="receiptArea">
+    <div class="header">
+      <img src="https://i.ibb.co/bb8q9qS/logo.png" alt="My MoMo Shop" class="logo">
+      <h2>My MoMo Shop</h2>
+      <p>Official Transaction Receipt</p>
+    </div>
+
+    <div class="text-center">
+      <div class="success-badge">Transaction Successful</div>
+    </div>
+
+    <div class="section">
+      <div class="row"><span>Agent:</span> <span id="agentName">Loading...</span></div>
+      <div class="row"><span>Customer:</span> <span id="custName">-</span></div>
+      <div class="row"><span>Phone:</span> <span id="custPhone">-</span></div>
+      <div class="row"><span>Type:</span> <span id="transType">-</span></div>
+      <div class="row"><span>Network:</span> <span id="network">-</span></div>
+      <div class="row"><span>Amount:</span> <span id="amount" class="amount">GHS 0.00</span></div>
+      <div class="row"><span>Reference:</span> <span id="reference">N/A</span></div>
+      <div class="row"><span>Date & Time:</span> <span id="date">-</span></div>
+      <div class="row"><span>Transaction ID:</span> <span id="transID">-</span></div>
+      <div class="row"><span>MoMo Ref:</span> <span id="momoRef">-</span></div>
+    </div>
+
+    <div id="qrcode"></div>
   </div>
 
-  <div class="section">
-    <div class="row"><span>Employee:</span> <span id="empName"></span></div>
-    <div class="row"><span>Customer:</span> <span id="custName"></span></div>
-    <div class="row"><span>Transaction Type:</span> <span id="transType"></span></div>
-    <div class="row"><span>Network / Bank:</span> <span id="network"></span></div>
-    <div class="row"><span>Amount:</span> <span id="amount"></span></div>
-    <div class="row"><span>Reference:</span> <span id="reference"></span></div>
-    <div class="row"><span>Date:</span> <span id="date"></span></div>
-    <div class="row"><span>Transaction ID:</span> <span id="transID"></span></div>
-  </div>
+  <button class="btn-print" onclick="printReceipt()">
+    Print Receipt
+  </button>
 
-  <div id="qrcode"></div>
-</div>
+  <script>
+    // Load transaction data from sessionStorage
+    const transaction = JSON.parse(sessionStorage.getItem('lastTransaction') || '{}');
 
-<button class="btn-print" onclick="printReceipt()">Print Receipt</button>
+    if (!transaction || !transaction.transactionId) {
+      document.body.innerHTML = `<h2 style="color:white; text-align:center; margin-top:50px;">No transaction found. Please complete a transaction first.</h2>`;
+    } else {
+      // Fill in the receipt
+      document.getElementById("agentName").textContent = transaction.agent_name || "Agent";
+      document.getElementById("custName").textContent = transaction.customer_name || "Customer";
+      document.getElementById("custPhone").textContent = transaction.customer_phone || "-";
+      document.getElementById("network").textContent = transaction.network || "-";
+      document.getElementById("amount").textContent = `GHS ${parseFloat(transaction.amount).toFixed(2)}`;
+      document.getElementById("reference").textContent = transaction.reference || "N/A";
+      document.getElementById("date").textContent = transaction.date || new Date().toLocaleString();
+      document.getElementById("transID").textContent = transaction.transactionId || "-";
+      document.getElementById("momoRef").textContent = transaction.momoRef || "N/A";
 
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+      // Set transaction type
+      const typeText = transaction.type === 'deposit' ? 'Cash Received (Deposit)' : 'Cash Paid (Withdrawal)';
+      document.getElementById("transType").textContent = typeText;
 
-<script>
-  // ✅ Pull values from sessionStorage
-  const customerName = sessionStorage.getItem("customerName");
-  const amount = sessionStorage.getItem("amount");
-  const transactionId = sessionStorage.getItem("transactionId");
-  const reference = sessionStorage.getItem("reference");
-  const network = sessionStorage.getItem("network"); // MTN, Vodafone, AirtelTigo or Bank
+      // Generate QR Code with full details
+      const qrText = `
+My MoMo Shop Receipt
 
-  // ✅ Determine if it's MoMo or Bank deposit
-  const transactionType = network.includes("MTN") || network.includes("Vodafone") || network.includes("AirtelTigo")
-    ? "MoMo Transaction"
-    : "Bank Deposit";
+Agent: ${transaction.agent_name}
+Customer: ${transaction.customer_name}
+Phone: ${transaction.customer_phone}
+Type: ${typeText}
+Network: ${transaction.network}
+Amount: GHS ${transaction.amount}
+Reference: ${transaction.reference}
+Date: ${transaction.date}
+Transaction ID: ${transaction.transactionId}
+MoMo Ref: ${transaction.momoRef || 'N/A'}
+      `.trim();
 
-  const employeeName = "Nana Yaw"; // (Later: fetch from session after login)
+      new QRCode(document.getElementById("qrcode"), {
+        text: qrText,
+        width: 160,
+        height: 160,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    }
 
-  // ✅ Fill receipt values
-  document.getElementById("empName").innerText = employeeName;
-  document.getElementById("custName").innerText = customerName;
-  document.getElementById("network").innerText = network;
-  document.getElementById("reference").innerText = reference || "N/A";
-  document.getElementById("transType").innerText = transactionType;
-  document.getElementById("amount").innerText = "₵" + amount;
-  document.getElementById("date").innerText = new Date().toLocaleString();
-  document.getElementById("transID").innerText = transactionId;
-
-  // ✅ QR Code now contains entire transaction details
-  const qrContent = `
-  Transaction ID: ${transactionId}
-  Customer: ${customerName}
-  Amount: ₵${amount}
-  Type: ${transactionType}
-  Network/Bank: ${network}
-  `;
-
-  new QRCode(document.getElementById("qrcode"), {
-      text: qrContent,
-      width: 130,
-      height: 130,
-  });
-
-  function printReceipt() {
-    window.print();
-  }
-</script>
-
+    function printReceipt() {
+      window.print();
+    }
+  </script>
 </body>
 </html>

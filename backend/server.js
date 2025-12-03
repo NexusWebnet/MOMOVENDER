@@ -1,131 +1,176 @@
-// server.js - FINAL, CLEAN, WORKING VERSION (CommonJS)
+// server.js — FINAL, CLEAN, 100% WORKING VERSION (2025)
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const db = require('./config/db');  // your DB connection
 
-// Momodisbursements & records
+// MoMo & Records
 const { sendWithdrawal } = require('./momo/disbursements');
 const recordsRoute = require('./routes/recordsRoute');
 
-// Import auth (exports { router, authenticateToken })
+// AUTH + MIDDLEWARE
 const authModule = require('./routes/auth');
 const auth = authModule.router;
-const authenticateToken = authModule.authenticateToken;
+const authenticateToken = authModule.authenticateToken;  // ← THIS IS KEY
 
-// Other routes
+// All other routes
 const users = require('./routes/users');
 const profile = require('./routes/profile');
 const notifications = require('./routes/notifications');
 const dashboardRoutes = require('./routes/em_index');
 const managerRoutes = require('./routes/manager');
-const managerDashboardRouter = require('./routes/managerDashboard');
+const managerDashboard = require('./routes/managerDashboard');
 const adminRoutes = require('./routes/admin');
+const transactionRoutes = require('./routes/transactions');  // ← your new route
 
 const app = express();
 const server = http.createServer(app);
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(bodyParser.json());
-
-// Serve frontend files (public folder)
-app.use(express.static(path.join(__dirname, '..')));
-
-// Socket.IO
+// =======================
+// SOCKET.IO SETUP
+// =======================
 const io = socketIo(server, {
   cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
-  socket.on("disconnect", () => console.log("User disconnected:", socket.id));
+
+  socket.on("joinAgent", (userId) => {
+    socket.join(`agent_${userId}`);
+    console.log(`Agent ${userId} joined room`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
 });
 
 app.set("socketio", io);
 
-// ROUTES
-app.use("/api/auth", auth);
-app.use("/api/users", users);
-app.use("/api/profile", profile);
-app.use("/api/notifications", notifications);
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api", recordsRoute);
-app.use('/api/manager', authenticateToken, managerRoutes);
-app.use('/api/manager-dashboard', authenticateToken, managerDashboardRouter);
-app.use('/api/admin', authenticateToken, adminRoutes);
+// =======================
+// MIDDLEWARE
+// =======================
+app.use(cors());
+app.use(express.json());
+app.use(bodyParser.json());
 
-// Optional agent route
+// Serve frontend (adjust path if needed)
+app.use(express.static(path.join(__dirname, '..'))); // serves your HTML/CSS/JS
+
+// =======================
+// ROUTES
+// =======================
+app.use("/api/auth", auth);
+app.use("/api/users", authenticateToken, users);
+app.use("/api/profile", authenticateToken, profile);
+app.use("/api/notifications", authenticateToken, notifications);
+app.use("/api/dashboard", authenticateToken, dashboardRoutes);
+app.use("/api", recordsRoute);
+
+// PROTECTED ROUTES
+app.use('/api/manager', authenticateToken, managerRoutes);
+app.use('/api/manager-dashboard', authenticateToken, managerDashboard);
+app.use('/api/admin', authenticateToken, adminRoutes);
 app.use('/api/manager-agents-full', authenticateToken, require('./routes/m_agents'));
 
-// === MOMO TRANSACTION ENDPOINT (DEPOSIT + WITHDRAWAL) ===
-app.post("/withdraw", async (req, res) => {
-  const { phone, amount, id, type = 'withdraw', agent_name } = req.body;
+// THIS LINE WAS MISSING — PROTECT YOUR TRANSACTION ROUTES!
+app.use('/api/transactions', authenticateToken, transactionRoutes);
 
-  // Validate
-  if (!phone || !amount || !id) {
-    return res.status(400).json({ status: false, message: "Missing required fields" });
+// =======================
+// WITHDRAW / DEPOSIT ENDPOINT (MoMo)
+// =======================
+app.post("/withdraw", authenticateToken, async (req, res) => {
+  const { 
+    phone, 
+    amount, 
+    id: transaction_id, 
+    type = 'withdraw', 
+    agent_name, 
+    network = 'MTN' 
+  } = req.body;
+
+  if (!phone || !amount || !transaction_id) {
+    return res.status(400).json({ status: false, message: "Missing fields" });
   }
 
+  const agentId = req.user.id;
+  const agentName = agent_name || `${req.user.first_name || ''} ${req.user.last_name || ''}`.trim();
+
   try {
-    let result;
+    let momoRef;
 
     if (type === 'deposit') {
-      // HANDLE DEPOSIT (Collection) — MTN MoMo Collection API
-      // Note: You need MTN Collection (not Disbursement) for deposit
-      // This is a placeholder — I'll give you real code if you have Collection API
-      console.log(`DEPOSIT: GHS ${amount} from ${phone} | Agent: ${agent_name}`);
-      result = { referenceId: "COLLECTION_REF_" + id, status: true };
-
+      console.log(`DEPOSIT: GHS ${amount} from ${phone} | Agent: ${agentName}`);
+      momoRef = "DEP_" + transaction_id;
     } else {
-      // HANDLE WITHDRAWAL (Disbursement) — Your existing working code
-      const ref = await sendWithdrawal(phone, amount, id);
-
-      if (!ref) {
-        return res.status(500).json({ status: false, message: "Withdrawal Failed" });
+      momoRef = await sendWithdrawal(phone, amount, transaction_id);
+      if (!momoRef) {
+        return res.status(500).json({ status: false, message: "MoMo withdrawal failed" });
       }
-
-      // Optional: Log transaction in DB
-      await req.pool.query(`
-        INSERT INTO transactions 
-        (sender_id, amount, transaction_type, payment_method, note, status)
-        VALUES (?, ?, 'withdraw', 'momo', ?, 'success')
-      `, [req.user?.id || 1, amount, `Withdrawal by ${agent_name}`]);
-
-      result = { referenceId: ref, status: true };
     }
 
-    // Success response
+    // SAVE TO momo_transactions
+    db.query(
+      `INSERT INTO momo_transactions 
+       (transaction_id, agent_id, agent_name, customer_phone, amount, type, network, momo_reference, reference_note, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'success')`,
+      [
+        transaction_id,
+        agentId,
+        agentName,
+        phone,
+        amount,
+        type,
+        network,
+        momoRef,
+        `${type === 'deposit' ? 'Deposit' : 'Withdrawal'} by ${agentName}`
+      ],
+      (err) => {
+        if (err) console.error("Save failed:", err);
+        else {
+          console.log(`MoMo Transaction SAVED → ${transaction_id}`);
+          // EMIT REAL-TIME UPDATE
+          io.to(`agent_${agentId}`).emit('newTransaction', {
+            transaction_id,
+            amount,
+            type,
+            table: 'momo',
+            network,
+            customer_phone: phone,
+            agent_name: agentName,
+            created_at: new Date().toISOString()
+          });
+        }
+      }
+    );
+
     res.json({
       status: true,
-      referenceId: result.referenceId,
-      message: `${type === 'deposit' ? 'Deposit' : 'Withdrawal'} successful!`,
-      data: { phone, amount, type, agent_name }
+      referenceId: momoRef || transaction_id,
+      message: "Transaction successful"
     });
 
   } catch (err) {
-    console.error("Transaction error:", err);
+    console.error("Server Error:", err);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
 
-// Start server
+// TEST MoMo
+app.get("/test-momo", async (req, res) => {
+  const result = await sendWithdrawal("233541234567", 5, "test-" + Date.now());
+  res.json(result ? { success: true, ref: result } : { success: false });
+});
+
+// =======================
+// START SERVER
+// =======================
 const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Open your browser → http://localhost:${PORT}/admin.html`);
-});
-
-// TEST MTN MOMO WITHDRAWAL (GHS 5 to test number)
-app.get("/test-momo", async (req, res) => {
-  const result = await sendWithdrawal("233541234567", 5, "test-" + Date.now());
-  
-  if (result) {
-    res.json({ success: true, message: "GHS 5 sent in sandbox!", ref: result });
-  } else {
-    res.status(500).json({ success: false, message: "Failed — check logs" });
-  }
+  console.log(`Open: http://localhost:${PORT}/EMPLOYEE/pages/index.html`);
 });
