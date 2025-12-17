@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log MoMo Transaction</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<style>
+  body { margin:0; font-family:"Poppins",sans-serif; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#222; min-height:100vh; }
+  .container { width:90%; max-width:450px; margin:40px auto; background:rgba(255,255,255,0.9); backdrop-filter:blur(12px); padding:25px; border-radius:15px; box-shadow:0px 4px 12px rgba(0,0,0,0.12); }
+  h2 { text-align:center; margin-bottom:20px; color:#4e34e2; }
+  label { display:block; margin:10px 0 5px; font-weight:600; }
+  input, select { width:100%; padding:12px; border:1px solid rgba(78,52,226,0.2); border-radius:10px; background:rgba(255,255,255,0.8); font-size:16px; }
+  input:focus, select:focus { border-color:#4e34e2; outline:none; background:white; }
+  button { margin-top:20px; width:100%; padding:14px; border:none; background:rgba(78,52,226,0.9); color:white; border-radius:10px; font-size:17px; font-weight:bold; cursor:pointer; }
+  button:hover { background:rgba(78,52,226,1); }
+  .back-btn { background:rgba(108,117,125,0.9); margin-bottom:20px; }
+  .back-btn:hover { background:rgba(108,117,125,1); }
+  .result { margin-top:20px; padding:12px; border-radius:10px; text-align:center; display:none; background:rgba(255,255,255,0.9); }
+  .result.success { border-left:4px solid #28a745; color:#155724; }
+  .result.error { border-left:4px solid #dc3545; color:#721c24; }
+
+  .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; }
+  .modal-content { background:#fff; padding:20px; border-radius:15px; width:90%; max-width:400px; text-align:left; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
+  .modal-content h3 { text-align:center; color:#4e34e2; margin-bottom:15px; }
+  #rQRCode { display:block; margin:10px auto; max-width:150px; }
+  .modal-buttons { display:flex; justify-content:space-between; margin-top:15px; }
+  .modal-buttons button { width:48%; padding:10px; font-weight:bold; border-radius:8px; border:none; cursor:pointer; }
+  .print-btn { background:#28a745; color:#fff; }
+  .cancel-btn { background:#dc3545; color:#fff; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <button class="back-btn" onclick="navigate('index')"><i class="fas fa-arrow-left"></i> Back to Dashboard</button>
+  <h2>Log MoMo Transaction</h2>
+
+  <form id="momoLoggerForm">
+    <label for="customerName">Customer Name</label>
+    <input type="text" id="customerName" placeholder="e.g., Kwame Adu" required>
+
+    <label for="customerPhone">Customer Phone</label>
+    <input type="tel" id="customerPhone" placeholder="e.g., 0241234567" required>
+
+    <label for="amount">Amount (GHS)</label>
+    <input type="number" id="amount" min="0.01" step="0.01" placeholder="0.00" required>
+
+    <label for="type">Type</label>
+    <select id="type" required>
+      <option value="">Select Type</option>
+      <option value="deposit">Deposit (Receive Money)</option>
+      <option value="withdraw">Withdrawal (Send Money)</option>
+    </select>
+
+    <label for="network">Network</label>
+    <select id="network" required>
+      <option value="">Select Network</option>
+      <option value="MTN">MTN</option>
+      <option value="Vodafone">Vodafone</option>
+      <option value="AirtelTigo">AirtelTigo</option>
+    </select>
+
+    <label for="reference">Reference (optional)</label>
+    <input type="text" id="reference" placeholder="e.g., Goods, Fees">
+
+    <button type="submit">Log MoMo Transaction</button>
+  </form>
+
+  <div id="result" class="result"></div>
+</div>
+
+<!-- Receipt Modal -->
+<div id="receiptModal" class="modal">
+  <div class="modal-content">
+    <h3>MoMo Transaction Receipt</h3>
+    <p><strong>Transaction ID:</strong> <span id="rId"></span></p>
+    <p><strong>Agent:</strong> <span id="rAgent"></span></p>
+    <p><strong>Customer:</strong> <span id="rCustomer"></span></p>
+    <p><strong>Phone:</strong> <span id="rPhone"></span></p>
+    <p><strong>Type:</strong> <span id="rType"></span></p>
+    <p><strong>Network:</strong> <span id="rNetwork"></span></p>
+    <p><strong>Amount:</strong> GHS <span id="rAmount"></span></p>
+    <p><strong>Reference:</strong> <span id="rRef"></span></p>
+    <p><strong>Date:</strong> <span id="rDate"></span></p>
+    <canvas id="rQRCode"></canvas>
+    <div class="modal-buttons">
+      <button class="print-btn" onclick="printReceipt()">Print</button>
+      <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+// FIX 1: LOAD USER FROM LOCALSTORAGE
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+const token = localStorage.getItem('token');
+
+if (!token || !user.id) {
+  alert('Please login first');
+  window.location.href = 'login.html';
+}
+
+const socket = io('http://localhost:8000');
+
+function navigate(page) { window.location.href = page + '.html'; }
+function closeModal() { document.getElementById('receiptModal').style.display = 'none'; }
+
+function printReceipt() {
+  const content = document.querySelector('#receiptModal .modal-content').innerHTML;
+  const win = window.open('', '', 'height=700,width=500');
+  win.document.write('<html><head><title>Receipt</title></head><body>' + content + '</body></html>');
+  win.document.close();
+  win.print();
+}
+
+function showResult(msg, type = 'success') {
+  const el = document.getElementById('result');
+  el.className = `result ${type}`;
+  el.innerHTML = `<p>${msg}</p>`;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+document.getElementById('momoLoggerForm').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const transactionType = document.getElementById('type').value;
+
+  const payload = {
+    type: transactionType,  // "deposit" or "withdraw"
+    customer_name: document.getElementById('customerName').value.trim(),
+    customer_phone: document.getElementById('customerPhone').value.trim(),
+    amount: parseFloat(document.getElementById('amount').value),
+    network: document.getElementById('network').value,
+    reference_note: document.getElementById('reference').value.trim() || 
+                    (transactionType === "deposit" ? "MoMo Deposit" : "MoMo Withdrawal"),
+    agent_name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || "Agent"
+  };
+
+  // Validation
+  if (!payload.customer_name || !payload.customer_phone || !payload.amount || !payload.network) {
+    return showResult('Please fill all required fields.', 'error');
+  }
+
+  try {
+    const res = await fetch('http://localhost:8000/records/log', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      const now = new Date().toLocaleString();
+      const txnId = data.transactionId || "MM" + Date.now();
+
+      document.getElementById('rId').textContent = txnId;
+      document.getElementById('rAgent').textContent = payload.agent_name;
+      document.getElementById('rCustomer').textContent = payload.customer_name;
+      document.getElementById('rPhone').textContent = payload.customer_phone;
+      document.getElementById('rType').textContent = transactionType === "deposit" ? "Deposit" : "Withdrawal";
+      document.getElementById('rNetwork').textContent = payload.network;
+      document.getElementById('rAmount').textContent = payload.amount.toFixed(2);
+      document.getElementById('rRef').textContent = payload.reference_note;
+      document.getElementById('rDate').textContent = now;
+
+      QRCode.toCanvas(document.getElementById('rQRCode'),
+        `MOMO ${transactionType.toUpperCase()}\nID: ${txnId}\nCustomer: ${payload.customer_name}\nPhone: ${payload.customer_phone}\nAmount: GHS ${payload.amount.toFixed(2)}\nDate: ${now}`,
+        { width: 150 }
+      );
+
+      document.getElementById('receiptModal').style.display = 'flex';
+      showResult('MoMo transaction logged successfully!', 'success');
+      document.getElementById('momoLoggerForm').reset();
+    } else {
+      showResult(data.message || 'Failed', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    showResult('Network error', 'error');
+  }
+});
+</script>
+</body>
+</html>

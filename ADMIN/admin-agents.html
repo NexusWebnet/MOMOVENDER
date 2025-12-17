@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Agents • My MoMo Shop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: 'Segoe UI', sans-serif; }
+    .glass { backdrop-filter: blur(16px) saturate(180%); background-color: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2); }
+    .sidebar { transition: transform 0.3s ease-in-out; }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+    }
+    #toast { display: none; }
+    #toast.show { display: block; animation: slideIn 0.5s, slideOut 0.5s 3.5s forwards; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes slideOut { to { transform: translateX(100%); opacity: 0; } }
+    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
+    @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  </style>
+</head>
+<body class="text-white min-h-screen">
+
+  <!-- Mobile Menu Button -->
+  <button id="menu-btn" class="md:hidden fixed top-6 left-6 z-50 bg-white/20 p-4 rounded-2xl backdrop-blur-lg shadow-xl">
+    <i class="fas fa-bars text-2xl"></i>
+  </button>
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar fixed md:static inset-y-0 left-0 z-40 w-80 glass shadow-2xl flex flex-col">
+      <div class="p-8 text-center border-b border-white/20">
+        <div class="w-28 h-28 bg-white/20 rounded-full mx-auto mb-4 flex items-center justify-center text-5xl font-bold">A</div>
+        <h2 class="text-3xl font-bold">Welcome Admin</h2>
+        <p class="text-purple-200 mt-2">Queen of the Shop</p>
+      </div>
+      <nav class="flex-1 p-6">
+        <ul class="space-y-4">
+          <li><a href="admin.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-tachometer-alt text-xl"></i><span class="text-xl font-medium">Overview</span></a></li>
+          <li><a href="admin-agents.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl bg-white/20 shadow-lg"><i class="fas fa-users text-xl"></i><span class="text-xl font-medium">Manage Agents</span></a></li>
+          <li><a href="admin-float.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-wallet text-xl"></i><span class="text-xl font-medium">Float Control</span></a></li>
+          <li><a href="admin-payroll.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-money-bill-wave text-xl"></i><span class="text-xl font-medium">Pay Salaries</span></a></li>
+          <li><a href="admin-reports.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-chart-bar text-xl"></i><span class="text-xl font-medium">Reports</span></a></li>
+        </ul>
+      </nav>
+      <div class="p-6 border-t border-white/20 text-center"><p class="text-sm opacity-80">© 2025 My MoMo Empire</p></div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-8 md:p-12">
+      <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
+          <h1 class="text-5xl font-bold">Manage Agents</h1>
+          <div class="flex gap-4">
+            <button onclick="exportCSV()" class="bg-green-600 hover:bg-green-700 px-6 py-4 rounded-2xl font-bold"><i class="fas fa-file-csv mr-2"></i>Export CSV</button>
+            <button onclick="openAddModal()" class="bg-white/20 hover:bg-white/30 px-6 py-4 rounded-2xl font-bold"><i class="fas fa-plus mr-2"></i>Add Agent</button>
+          </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Total Agents</h3><p id="stat-total" class="text-4xl font-bold mt-2">-</p></div>
+          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Active</h3><p id="stat-active" class="text-4xl font-bold mt-2 text-green-400">-</p></div>
+          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Inactive</h3><p id="stat-inactive" class="text-4xl font-bold mt-2 text-red-400">-</p></div>
+          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Total Float</h3><p id="stat-float" class="text-4xl font-bold mt-2 text-yellow-400">-</p></div>
+        </div>
+
+        <!-- Search, Filter & Bulk Actions -->
+        <div class="glass p-6 rounded-3xl mb-8">
+          <div class="flex flex-col md:flex-row gap-4 items-center">
+            <input type="text" id="search-agent" placeholder="Search by name, phone or username..." class="flex-1 px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300">
+            <select id="status-filter" class="px-6 py-4 rounded-2xl bg-white/10 text-white">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+            <button onclick="loadAgents(true)" class="bg-white/20 hover:bg-white/30 px-8 py-4 rounded-2xl"><i class="fas fa-search mr-2"></i>Filter</button>
+            <button onclick="bulkDelete()" id="bulk-delete-btn" class="bg-red-600 hover:bg-red-700 px-6 py-4 rounded-2xl hidden"><i class="fas fa-trash mr-2"></i>Delete Selected</button>
+          </div>
+        </div>
+
+        <!-- Agents Table -->
+        <div class="glass rounded-3xl overflow-hidden shadow-2xl">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-white/10">
+                <tr>
+                  <th class="p-6 text-left"><input type="checkbox" id="select-all"></th>
+                  <th class="p-6 text-left text-xl font-bold cursor-pointer" onclick="sortTable('name')">Staff Name <i class="fas fa-sort ml-2"></i></th>
+                  <th class="p-6 text-left text-xl font-bold">Role</th>
+                  <th class="p-6 text-left text-xl font-bold cursor-pointer" onclick="sortTable('phone')">Phone <i class="fas fa-sort ml-2"></i></th>
+                  <th class="p-6 text-left text-xl font-bold cursor-pointer" onclick="sortTable('username')">Username <i class="fas fa-sort ml-2"></i></th>
+                  <th class="p-6 text-left text-xl font-bold">Branch</th>
+                  <th class="p-6 text-left text-xl font-bold cursor-pointer" onclick="sortTable('balance')">Float Balance <i class="fas fa-sort ml-2"></i></th>
+                  <th class="p-6 text-left text-xl font-bold cursor-pointer" onclick="sortTable('sales')">Today's Sales <i class="fas fa-sort ml-2"></i></th>
+                  <th class="p-6 text-left text-xl font-bold">Status</th>
+                  <th class="p-6 text-left text-xl font-bold">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="agents-table">
+                <!-- Skeleton Loader -->
+                <tr><td colspan="10" class="p-12 text-center"><div class="skeleton h-20 w-full rounded"></div></td></tr>
+              </tbody>
+            </table>
+            <div class="p-6 text-center">
+              <button id="load-more" onclick="loadAgents()" class="bg-white/20 hover:bg-white/30 px-8 py-4 rounded-2xl hidden">Load More Agents</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-8 right-8 z-50">
+    <div class="bg-white text-gray-800 px-8 py-5 rounded-2xl shadow-2xl flex items-center gap-4">
+      <i id="toast-icon" class="fas fa-check-circle text-3xl text-green-500"></i>
+      <span id="toast-message" class="font-bold text-xl"></span>
+    </div>
+  </div>
+
+  <!-- Add/Edit Agent Modal -->
+  <div id="agent-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+    <div class="glass p-10 rounded-3xl max-w-md w-full">
+      <h2 id="modal-title" class="text-3xl font-bold text-center mb-8">Add New Agent</h2>
+      <form id="agent-form">
+        <input type="hidden" id="edit-id">
+        <div class="space-y-6">
+          <div class="flex gap-4">
+            <input type="text" id="first-name" placeholder="First Name" class="flex-1 px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300" required>
+            <input type="text" id="last-name" placeholder="Last Name" class="flex-1 px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300" required>
+          </div>
+          <input type="text" id="username" placeholder="Username" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300" required>
+          <input type="tel" id="phone" placeholder="Phone Number" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300" required>
+          <input type="password" id="password" placeholder="Password (leave blank to keep)" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300">
+
+          <select id="role" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white">
+            <option value="employee">Employee</option>
+            <option value="manager">Manager</option>
+          </select>
+
+          <select id="branch_id" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white">
+            <option value="">No Branch (Optional)</option>
+          </select>
+        </div>
+        <div class="flex gap-6 mt-10">
+          <button type="submit" class="flex-1 bg-purple-600 text-white py-4 rounded-2xl font-bold hover:bg-purple-700">Save</button>
+          <button type="button" onclick="closeModal()" class="flex-1 bg-gray-500 text-white py-4 rounded-2xl">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token') || '';
+    let currentPage = 1;
+    let currentSort = 'name';
+    let currentOrder = 'asc';
+    let hasMore = true;
+
+    function showToast(message, success = true) {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toast-icon');
+      const msg = document.getElementById('toast-message');
+      msg.textContent = message;
+      icon.className = success ? "fas fa-check-circle text-3xl text-green-500" : "fas fa-exclamation-circle text-3xl text-red-500";
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    async function loadBranches() {
+      try {
+        const res = await fetch(`/api/admin/branches`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) throw new Error('Failed to load branches');
+        const branches = await res.json();
+        const select = document.getElementById('branch_id');
+        select.innerHTML = '<option value="">No Branch (Optional)</option>';
+        branches.forEach(b => {
+          select.innerHTML += `<option value="${b.id}">${b.name} - ${b.location}</option>`;
+        });
+      } catch (err) {
+        console.error("Failed to load branches:", err);
+      }
+    }
+
+    async function loadAgents(reset = false) {
+      if (reset) { currentPage = 1; hasMore = true; document.getElementById('agents-table').innerHTML = ''; }
+      if (!hasMore && !reset) return;
+
+      const search = document.getElementById('search-agent').value;
+      const status = document.getElementById('status-filter').value;
+
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: 15,
+        search,
+        status,
+        sort: currentSort,
+        order: currentOrder
+      });
+
+      try {
+        const res = await fetch(`/api/admin/agents?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) throw new Error('Failed to fetch agents');
+        const data = await res.json();
+
+        if (reset) updateStats(data.stats || {});
+
+        const tbody = document.getElementById('agents-table');
+        if (reset) tbody.innerHTML = '';
+
+        if (!data.agents || data.agents.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="10" class="p-12 text-center text-purple-300 text-xl">No agents found</td></tr>';
+          hasMore = false;
+          return;
+        }
+
+        data.agents.forEach(agent => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-white/10';
+          tr.innerHTML = `
+            <td class="p-6"><input type="checkbox" class="agent-checkbox" value="${agent.id}"></td>
+            
+            <!-- Staff Name + Avatar -->
+            <td class="p-6 font-bold text-xl flex items-center gap-4">
+              <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl">
+                ${agent.first_name[0]}${agent.last_name ? agent.last_name[0] : ''}
+              </div>
+              <div>
+                ${agent.first_name} ${agent.last_name || ''}
+                <span class="block text-sm opacity-80">@${agent.username}</span>
+              </div>
+            </td>
+            
+            <!-- Role -->
+            <td class="p-6">
+              <span class="px-5 py-2 rounded-full text-sm font-bold ${agent.role === 'manager' ? 'bg-purple-600/30 text-purple-300' : 'bg-blue-600/30 text-blue-300'}">
+                ${agent.role === 'manager' ? 'Manager' : 'Employee'}
+              </span>
+            </td>
+            
+            <!-- Phone -->
+            <td class="p-6">${agent.phone || 'N/A'}</td>
+            
+            <!-- Username -->
+            <td class="p-6">@${agent.username}</td>
+            
+            <!-- Branch -->
+            <td class="p-6">
+              ${agent.branch_name ? 
+                `<span class="font-bold">${agent.branch_name}</span>
+                 <span class="block text-sm opacity-70">${agent.branch_location || ''}</span>` 
+                : '<span class="text-gray-400">No Branch Assigned</span>'
+              }
+            </td>
+            
+            <!-- Float Balance -->
+            <td class="p-6 text-green-400 font-bold text-xl">
+              ${agent.role === 'employee' ? `GHS ${Number(agent.balance || 0).toLocaleString()}` : '—'}
+            </td>
+            
+            <!-- Today's Sales -->
+            <td class="p-6 text-blue-400 font-bold">
+              ${agent.role === 'employee' ? `GHS ${Number(agent.today_sales || 0).toLocaleString()}` : '—'}
+            </td>
+            
+            <!-- Status -->
+            <td class="p-6">
+              <span class="px-6 py-2 rounded-full font-bold ${agent.status === 'active' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}">
+                ${agent.status || 'active'}
+              </span>
+            </td>
+            
+            <!-- Actions -->
+            <td class="p-6">
+              <button onclick="editAgent(${agent.id})" class="mr-4 text-blue-400 hover:text-blue-200 font-bold">Edit</button>
+              <button onclick="deleteAgent(${agent.id})" class="text-red-400 hover:text-red-200 font-bold">Delete</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        hasMore = data.agents.length === 15;
+        document.getElementById('load-more').classList.toggle('hidden', !hasMore);
+        currentPage++;
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to load agents", false);
+      }
+    }
+
+    function updateStats(stats) {
+      document.getElementById('stat-total').textContent = stats.total || 0;
+      document.getElementById('stat-active').textContent = stats.active || 0;
+      document.getElementById('stat-inactive').textContent = stats.inactive || 0;
+      document.getElementById('stat-float').textContent = `GHS ${(stats.totalFloat || 0).toLocaleString()}`;
+    }
+
+    function sortTable(column) {
+      if (currentSort === column) {
+        currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSort = column;
+        currentOrder = 'asc';
+      }
+      loadAgents(true);
+    }
+
+    async function exportCSV() {
+      try {
+        const res = await fetch(`/api/admin/agents?export=csv`, { headers: { Authorization: `Bearer ${token}` } });
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `agents_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+      } catch (err) {
+        showToast("Export failed", false);
+      }
+    }
+
+    function bulkDelete() {
+      const selected = Array.from(document.querySelectorAll('.agent-checkbox:checked')).map(cb => cb.value);
+      if (selected.length === 0) return showToast("No agents selected", false);
+      if (!confirm(`Delete ${selected.length} agents permanently?`)) return;
+
+      Promise.all(selected.map(id => fetch(`/api/admin/agents/${id}`, { 
+        method: 'DELETE', 
+        headers: { Authorization: `Bearer ${token}` } 
+      })))
+        .then(() => { showToast("Agents deleted"); loadAgents(true); })
+        .catch(() => showToast("Bulk delete failed", false));
+    }
+
+    // Checkbox logic
+    document.getElementById('select-all').addEventListener('change', (e) => {
+      document.querySelectorAll('.agent-checkbox').forEach(cb => cb.checked = e.target.checked);
+      document.getElementById('bulk-delete-btn').classList.toggle('hidden', !e.target.checked);
+    });
+    document.getElementById('agents-table').addEventListener('change', () => {
+      const anyChecked = document.querySelectorAll('.agent-checkbox:checked').length > 0;
+      document.getElementById('bulk-delete-btn').classList.toggle('hidden', !anyChecked);
+    });
+
+    // Modal Functions
+    function openAddModal() {
+      document.getElementById('modal-title').textContent = 'Add New Agent';
+      document.getElementById('agent-form').reset();
+      document.getElementById('edit-id').value = '';
+      document.getElementById('role').value = 'employee';
+      loadBranches();
+      document.getElementById('agent-modal').classList.remove('hidden');
+    }
+
+    async function editAgent(id) {
+      try {
+        const res = await fetch(`/api/admin/agents/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        const agent = await res.json();
+
+        document.getElementById('modal-title').textContent = 'Edit Agent';
+        document.getElementById('edit-id').value = agent.id;
+        document.getElementById('first-name').value = agent.first_name || '';
+        document.getElementById('last-name').value = agent.last_name || '';
+        document.getElementById('username').value = agent.username || '';
+        document.getElementById('phone').value = agent.phone || '';
+        document.getElementById('role').value = agent.role || 'employee';
+        await loadBranches();
+        document.getElementById('branch_id').value = agent.branch_id || '';
+        document.getElementById('agent-modal').classList.remove('hidden');
+      } catch (err) {
+        showToast("Failed to load agent", false);
+      }
+    }
+
+    async function deleteAgent(id) {
+      if (!confirm('Delete this agent permanently?')) return;
+      try {
+        await fetch(`/api/admin/agents/${id}`, { 
+          method: 'DELETE', 
+          headers: { Authorization: `Bearer ${token}` } 
+        });
+        showToast("Agent deleted");
+        loadAgents(true);
+      } catch (err) {
+        showToast("Delete failed", false);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('agent-modal').classList.add('hidden');
+    }
+
+    // Form Submit
+    document.getElementById('agent-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-id').value;
+      const formData = {
+        first_name: document.getElementById('first-name').value,
+        last_name: document.getElementById('last-name').value,
+        username: document.getElementById('username').value,
+        phone: document.getElementById('phone').value,
+        password: document.getElementById('password').value,
+        branch_id: document.getElementById('branch_id').value || null,
+        role: document.getElementById('role').value
+      };
+
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `/api/admin/agents/${id}` : '/api/admin/agents';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(formData)
+        });
+
+        if (!res.ok) throw new Error('Operation failed');
+        
+        closeModal();
+        showToast(id ? "Agent updated!" : "Agent created!");
+        loadAgents(true);
+      } catch (err) {
+        showToast("Operation failed", false);
+      }
+    });
+
+    // Real-time search & filter
+    document.getElementById('search-agent').addEventListener('keyup', () => loadAgents(true));
+    document.getElementById('status-filter').addEventListener('change', () => loadAgents(true));
+
+    // Mobile menu
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+
+    // Load on start
+    loadAgents(true);
+  </script>
+</body>
+</html>

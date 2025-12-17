@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bank Deposits</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { margin:0; font-family:"Poppins",sans-serif; background:#f8f9fa; min-height:100vh; }
+    .header { background:#6a1b9a; color:white; padding:15px; text-align:center; font-size:20px; position:relative; }
+    .header .back { position:absolute; left:15px; top:15px; font-size:24px; cursor:pointer; }
+    .container { padding:20px; max-width:1000px; margin:auto; }
+    .search-bar { width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; font-size:16px; margin-bottom:15px; }
+    
+    .filter-card { background:white; padding:20px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1); margin-bottom:20px; }
+    .date-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px; }
+    .date-row input { flex:1; min-width:200px; padding:10px; border:1px solid #ddd; border-radius:8px; }
+    .apply-btn { background:#ffb300; color:black; border:none; padding:12px 30px; border-radius:50px; font-weight:bold; cursor:pointer; width:100%; font-size:16px; }
+    
+    .export-buttons { display:flex; gap:10px; margin:20px 0; }
+    .export-btn { flex:1; padding:12px; border:none; border-radius:10px; color:white; font-weight:bold; cursor:pointer; }
+    .pdf-btn { background:#e91e63; }
+    .excel-btn { background:#1e88e5; }
+
+    table { width:100%; border-collapse:collapse; background:white; border-radius:15px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+    th { background:#6a1b9a; color:white; padding:15px; text-align:left; }
+    td { padding:15px; border-bottom:1px solid #eee; }
+    .amount { font-weight:bold; color:#2e7d32; }
+    .no-data { text-align:center; padding:40px; color:#777; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="back" onclick="navigate('index')"><i class="fas fa-arrow-left"></i></div>
+    Bank Deposits History
+  </div>
+
+  <div class="container">
+    <input type="text" class="search-bar" id="searchInput" placeholder="Search by name, phone or bank..." />
+
+    <div class="filter-card">
+      <h3 style="margin-top:0; color:#6a1b9a;">Filter Reports</h3>
+      <div class="date-row">
+        <input type="date" id="startDate" />
+        <input type="date" id="endDate" />
+      </div>
+      <button class="apply-btn" onclick="applyFilter()">Apply Filters</button>
+    </div>
+
+    <div class="export-buttons">
+      <button class="export-btn pdf-btn" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Download PDF</button>
+      <button class="export-btn excel-btn" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Download Excel</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Bank</th>
+          <th>Account No.</th>
+          <th>Amount</th>
+          <th>Reference</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="transactionsBody">
+        <tr><td colspan="6" class="no-data">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Global variables
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    // Navigation function
+    window.navigate = (page) => location.href = page + '.html';
+
+    let allTransactions = [];
+
+    // Load transactions on page load
+    async function loadTransactions() {
+      if (!token) {
+        alert("Please login first");
+        window.location.href = '/login.html';
+        return;
+      }
+
+      // Default: Last 7 days
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 7);
+
+      document.getElementById('startDate').value = start.toISOString().split('T')[0];
+      document.getElementById('endDate').value = end.toISOString().split('T')[0];
+
+      await fetchTransactions(start, end);
+    }
+
+    // Fetch using relative path — WORKS ON PHONE VIA NGROK
+    async function fetchTransactions(startDate, endDate) {
+      try {
+        const startStr = startDate.toISOString().split('T')[0];
+        const endStr = endDate.toISOString().split('T')[0];
+
+        const res = await fetch(`/api/transactions/bank?start=${startStr}&end=${endStr}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json();
+        allTransactions = data.data || data.transactions || [];
+        renderTable(allTransactions);
+      } catch (err) {
+        console.error('Bank deposits load error:', err);
+        document.getElementById('transactionsBody').innerHTML = 
+          `<tr><td colspan="6" class="no-data">Error loading bank deposits. Check connection.</td></tr>`;
+      }
+    }
+
+    // Render table
+    function renderTable(transactions) {
+      const tbody = document.getElementById('transactionsBody');
+      if (transactions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="no-data">No bank deposits found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = transactions.map(t => `
+        <tr>
+          <td>${t.customer_name || 'Unknown'}<br><small>${t.customer_phone || ''}</small></td>
+          <td>${t.bank_name || '—'}</td>
+          <td>${t.customer_account || '—'}</td>
+          <td class="amount">GHS ${parseFloat(t.amount || 0).toFixed(2)}</td>
+          <td><small>${t.reference_note || 'Bank Deposit'}</small></td>
+          <td>${new Date(t.created_at).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Apply filter
+    window.applyFilter = async () => {
+      const start = document.getElementById('startDate').value;
+      const end = document.getElementById('endDate').value;
+      if (!start || !end) return alert("Select both dates");
+      await fetchTransactions(new Date(start), new Date(end));
+    };
+
+    // Search
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      const filtered = allTransactions.filter(t => 
+        (t.customer_name && t.customer_name.toLowerCase().includes(term)) ||
+        (t.customer_phone && t.customer_phone.includes(term)) ||
+        (t.bank_name && t.bank_name.toLowerCase().includes(term)) ||
+        (t.customer_account && t.customer_account.includes(term))
+      );
+      renderTable(filtered);
+    });
+
+    // Export to PDF
+    window.exportToPDF = () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text("Bank Deposits Report", 14, 20);
+      doc.setFontSize(12);
+      doc.text(`Agent: ${user.first_name || ''} ${user.last_name || ''}`, 14, 30);
+      doc.text(`Period: ${document.getElementById('startDate').value} to ${document.getElementById('endDate').value}`, 14, 38);
+
+      let y = 50;
+      allTransactions.forEach(t => {
+        const line = `${new Date(t.created_at).toLocaleDateString()} | ${t.customer_name || 'Unknown'} | ${t.bank_name || ''} | GHS ${t.amount}`;
+        doc.text(line, 14, y);
+        y += 10;
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+
+      doc.save("bank_deposits.pdf");
+    };
+
+    // Export to Excel
+    window.exportToExcel = () => {
+      const data = allTransactions.map(t => ({
+        Date: new Date(t.created_at).toLocaleDateString(),
+        Customer: t.customer_name || 'Unknown',
+        Phone: t.customer_phone || '',
+        Bank: t.bank_name || '',
+        "Account No": t.customer_account || '',
+        Amount: parseFloat(t.amount || 0),
+        Reference: t.reference_note || 'Bank Deposit'
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Bank Deposits");
+      XLSX.writeFile(wb, "bank_deposits.xlsx");
+    };
+
+    // Load on page load
+    window.addEventListener('DOMContentLoaded', loadTransactions);
+  </script>
+</body>
+</html>

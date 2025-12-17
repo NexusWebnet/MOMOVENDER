@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../css/manage_staff.css">
+    <link rel="manifest" href="manifest.json"> <!-- For Android PWA support -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome CDN -->
+</head>
+</head>
+<body>
+    <div class="container">
+         <header class="header">
+           <div class="header-top">
+            <i class="fas fa-bars header-icon left" onclick="toggleMenu()"></i>
+             <h1>Manage Staff</h1>
+             <i class="fas fa-bell header-icon right"></i>
+           </div>
+
+           <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search staff...">
+           </div>
+        </header>
+
+        <div class="sidebar" id="sidebar">
+            <div class="menu-header">
+                <h3>Menu</h3>
+                <i class="fas fa-times close-btn" onclick="toggleMenu()"></i>
+            </div>
+            <ul class="menu-list" >
+                <li class="menu-item" onclick="navigate('dashboard')">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item" onclick="navigate('dashboard')">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Transaction</span>
+                </li>
+                <li class="menu-item" onclick="navigate('dashboard')">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </li>
+                <li class="menu-item" onclick="navigate('dashboard')">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Withdrawal</span>
+                </li>
+                <li class="menu-item" onclick="navigate('dashboard')">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Deposite</span>
+                </li>
+                <li class="menu-item" onclick="navigate('dashboard')">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="employee">
+            <div class="employee-header">
+                <h3>Staff Members</h3>
+                <button class="view-btn" onclick="viewAll()">Add Staff</button>
+            </div>
+          <div class="staff-item">
+               <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+              <div class="staff-info">
+                <p>Nana Ama</p>
+                <div class="active1">
+                  <div class="status busy"></div>
+                 <p>Online </p>
+                </div>  
+                 <i class="fas fa-arrow-right card-arrow" onclick="showDetails('bank')"></i> 
+              </div>
+          </div>
+          <div class="staff-item">
+               <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+              <div class="staff-info">
+                <p>Nana Ama</p>
+                <div class="active1">
+                  <div class="status busy"></div>
+                 <p>Online </p>
+                </div>  
+                 <i class="fas fa-arrow-right card-arrow" onclick="showDetails('bank')"></i> 
+              </div>
+          </div>
+          <div class="staff-item">
+               <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+              <div class="staff-info">
+                <p>Nana Ama</p>
+                <div class="active1">
+                  <div class="status busy"></div>
+                 <p>Online </p>
+                </div>  
+                 <i class="fas fa-arrow-right card-arrow" onclick="showDetails('bank')"></i> 
+              </div>
+          </div>
+          <div class="staff-item">
+               <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+              <div class="staff-info">
+                <p>Nana Ama</p>
+                <div class="active1">
+                  <div class="status busy"></div>
+                 <p>Online </p>
+                </div>  
+                 <i class="fas fa-arrow-right card-arrow" onclick="showDetails('bank')"></i> 
+              </div>
+          </div>
+          <div class="staff-item">
+               <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+              <div class="staff-info">
+                <p>Nana Ama</p>
+                <div class="active1">
+                  <div class="status busy"></div>
+                 <p>Online </p>
+                </div>  
+                 <i class="fas fa-arrow-right card-arrow" onclick="showDetails('bank')"></i> 
+              </div>
+          </div>
+          <div class="staff-item">
+               <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+              <div class="staff-info">
+                <p>Nana Ama</p>
+                <div class="active1">
+                  <div class="status online"></div>
+                 <p>Online </p>
+                </div>  
+                 <i class="fas fa-arrow-right card-arrow" onclick="showDetails('bank')"></i> 
+              </div>
+          </div>
+          <div class="staff-item">
+               <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+              <div class="staff-info">
+                <p>Nana Ama</p>
+                <div class="active1">
+                  <div class="status active"></div>
+                 <p>Online </p>
+                </div>  
+                 <i class="fas fa-arrow-right card-arrow" onclick="showDetails('bank')"></i> 
+              </div>
+          </div>
+          <div class="staff-item">
+               <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+              <div class="staff-info">
+                <p>Nana Ama</p>
+                <div class="active1">
+                  <div class="status active"></div>
+                 <p>Online </p>
+                </div>  
+                 <i class="fas fa-arrow-right card-arrow" onclick="showDetails('bank')"></i> 
+              </div>
+          </div>
+          <div class="staff-item">
+               <img src="../../ASSETS/images/profile.jpg" alt="Staff">
+              <div class="staff-info">
+                <p>Nana Ama</p>
+                <div class="active1">
+                  <div class="status offline"></div>
+                 <p>Online </p>
+                </div>  
+                 <i class="fas fa-arrow-right card-arrow" onclick="showDetails('bank')"></i> 
+              </div>
+          </div>
+        </div>
+
+        <!-- Add Staff Modal -->
+<div id="addStaffModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <h2>Add New Staff</h2>
+    <form id="addStaffForm">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" placeholder="Enter staff name" required>
+
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" placeholder="Enter email" required>
+
+      <label for="phone">Phone</label>
+      <input type="text" id="phone" name="phone" placeholder="Enter phone number" required>
+
+      <label for="role">Role</label>
+      <input type="text" id="role" name="role" placeholder="Enter role" required>
+
+      <button type="submit" class="submit-btn">Add Staff</button>
+    </form>
+  </div>
+</div>
+
+    </div>
+   <script src="../js/manage_staff.js"></script>
+</body>
+</html>

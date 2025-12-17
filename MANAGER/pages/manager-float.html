@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Branch Float - Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-orange-50 min-h-screen">
+
+  <div class="bg-gradient-to-r from-orange-600 to-orange-700 text-white p-8 shadow-xl">
+    <div class="max-w-6xl mx-auto">
+      <h1 class="text-4xl font-bold">Branch Float Management</h1>
+      <p id="branch-name" class="text-2xl mt-2 font-light">Loading...</p>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto p-8 grid lg:grid-cols-4 gap-6">
+
+    <!-- Current Float Card -->
+    <div class="bg-white rounded-2xl shadow-xl p-8 text-center">
+      <i class="fas fa-wallet text-6xl text-orange-500 mb-4"></i>
+      <p class="text-gray-600 text-lg">Current Branch Float</p>
+      <p id="current-float" class="text-5xl font-bold text-orange-600 mt-2">GHS 0</p>
+      <p id="float-status" class="mt-4 text-2xl font-bold"></p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="bg-white rounded-2xl shadow-xl p-6">
+      <h3 class="font-bold text-lg mb-4">Today's Activity</h3>
+      <div class="space-y-3">
+        <div class="flex justify-between"><span>Loaded Today</span><strong id="loaded-today" class="text-green-600">GHS 0</strong></div>
+        <div class="flex justify-between"><span>Used Today</span><strong id="used-today" class="text-red-600">GHS 0</strong></div>
+        <div class="flex justify-between"><span>Net Change</span><strong id="net-change">GHS 0</strong></div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-xl p-6">
+      <h3 class="font-bold text-lg mb-4">Low Float Agents</h3>
+      <div id="low-agents-list" class="space-y-3 text-sm">
+        <p class="text-gray-500 text-center py-8">No agents below threshold</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-xl p-6">
+      <h3 class="font-bold text-lg mb-4">Quick Actions</h3>
+      <button onclick="openRequestModal()" class="w-full bg-orange-600 text-white py-4 rounded-xl font-bold hover:bg-orange-700 mb-3">
+        <i class="fas fa-hand-holding-usd mr-2"></i> Request More Float
+      </button>
+      <button onclick="viewHistory()" class="w-full bg-gray-700 text-white py-4 rounded-xl font-bold hover:bg-gray-800">
+        <i class="fas fa-history mr-2"></i> View Float History
+      </button>
+    </div>
+  </div>
+
+  <!-- Agents Float Table -->
+  <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden mt-8">
+    <div class="p-6 border-b">
+      <h2 class="text-2xl font-bold">Agent Float Balances</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-4 text-left">Agent</th>
+            <th class="px-6 py-4 text-left">Phone</th>
+            <th class="px-6 py-4 text-left">Current Balance</th>
+            <th class="px-6 py-4 text-left">Today's Sales</th>
+            <th class="px-6 py-4 text-left">Status</th>
+            <th class="px-6 py-4 text-left">Action</th>
+          </tr>
+        </thead>
+        <tbody id="agents-float-table" class="divide-y divide-gray-200">
+          <!-- Filled by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Request Float Modal -->
+  <div id="requestModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+      <h2 class="text-2xl font-bold mb-6 text-orange-700">Request Additional Float</h2>
+      <form id="requestForm">
+        <input type="number" id="request-amount" placeholder="Amount needed (GHS)" class="w-full px-4 py-3 border rounded-xl mb-4" required min="10000">
+        <textarea id="request-reason" placeholder="Reason (e.g. High customer traffic, weekend rush)" class="w-full px-4 py-3 border rounded-xl mb-6" rows="4" required></textarea>
+        <div class="flex gap-4">
+          <button type="submit" class="flex-1 bg-orange-600 text-white py-3 rounded-xl font-bold hover:bg-orange-700">
+            Send Request to Head Office
+          </button>
+          <button type="button" onclick="closeModal()" class="flex-1 bg-gray-300 py-3 rounded-xl">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+
+    async function loadFloatPage() {
+      const res = await fetch('/api/manager/float/branch', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+
+      // Header
+      document.getElementById('branch-name').textContent = data.branch.name + ' Branch';
+
+      // Current float
+      const current = data.branch_float;
+      document.getElementById('current-float').textContent = 'GHS ' + Number(current).toLocaleString();
+
+      const statusEl = document.getElementById('float-status');
+      if (current < 300000) {
+        statusEl.textContent = 'CRITICAL LOW';
+        statusEl.className = 'mt-4 text-2xl font-bold text-red-600';
+      } else if (current < 800000) {
+        statusEl.textContent = 'LOW - Request More';
+        statusEl.className = 'mt-4 text-2xl font-bold text-yellow-600';
+      } else {
+        statusEl.textContent = 'HEALTHY';
+        statusEl.className = 'mt-4 text-2xl font-bold text-green-600';
+      }
+
+      // Today's activity
+      document.getElementById('loaded-today').textContent = 'GHS ' + Number(data.today_loaded || 0).toLocaleString();
+      document.getElementById('used-today').textContent = 'GHS ' + Number(data.today_used || 0).toLocaleString();
+      document.getElementById('net-change').textContent = 'GHS ' + Number((data.today_loaded - data.today_used || 0)).toLocaleString();
+
+      // Low float agents
+      const lowList = document.getElementById('low-agents-list');
+      lowList.innerHTML = '';
+      if (data.low_agents.length === 0) {
+        lowList.innerHTML = '<p class="text-gray-500 text-center py-8">All agents have good float 😊</p>';
+      } else {
+        data.low_agents.forEach(a => {
+          const div = document.createElement('div');
+          div.className = 'flex justify-between items-center p-3 bg-red-50 rounded-lg';
+          div.innerHTML = `<strong>${a.name}</strong> <span class="text-red-600">GHS ${Number(a.balance).toLocaleString()}</span>`;
+          lowList.appendChild(div);
+        });
+      }
+
+      // Agents table
+      const tbody = document.getElementById('agents-float-table');
+      tbody.innerHTML = '';
+      data.agents.forEach(a => {
+        const status = a.balance < 50000 ? 'CRITICAL' : a.balance < 150000 ? 'LOW' : 'GOOD';
+        const color = a.balance < 50000 ? 'text-red-600 bg-red-100' : a.balance < 150000 ? 'text-yellow-600 bg-yellow-100' : 'text-green-600 bg-green-100';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="px-6 py-4 font-medium">${a.first_name} ${a.last_name}</td>
+          <td class="px-6 py-4">${a.phone}</td>
+          <td class="px-6 py-4 text-xl font-bold">GHS ${Number(a.balance).toLocaleString()}</td>
+          <td class="px-6 py-4">GHS ${Number(a.today_sales || 0).toLocaleString()}</td>
+          <td class="px-6 py-4"><span class="px-4 py-2 rounded-full text-xs font-bold ${color}">${status}</span></td>
+          <td class="px-6 py-4">
+            <button onclick="topupAgent(${a.id}, '${a.first_name}')" class="text-orange-600 font-bold hover:underline">Top-Up</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openRequestModal() {
+      document.getElementById('requestModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('requestModal').classList.add('hidden');
+    }
+
+    document.getElementById('requestForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const amount = document.getElementById('request-amount').value;
+      const reason = document.getElementById('request-reason').value;
+
+      await fetch('/api/manager/float/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ amount: Number(amount), reason })
+      });
+      alert('Float request sent to Head Office!');
+      closeModal();
+    };
+
+    function topupAgent(agentId, name) {
+      const amount = prompt(`Top-up float for ${name} (GHS):`);
+      if (amount && !isNaN(amount)) {
+        fetch('/api/manager/float/topup-agent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ agent_id: agentId, amount: Number(amount) })
+        }).then(() => loadFloatPage());
+      }
+    }
+
+    // Load every 20 seconds
+    loadFloatPage();
+    setInterval(loadFloatPage, 20000);
+  </script>
+</body>
+</html>

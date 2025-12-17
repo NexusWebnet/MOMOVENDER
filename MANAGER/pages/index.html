@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manager Dashboard</title>
+  <link rel="stylesheet" href="../css/index.css" />
+   <link rel="manifest" href="manifest.json"> <!-- For Android PWA support -->
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="dashboard">
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-top">
+        <i class="fas fa-bars header-icon" aria-label="Toggle Menu"></i>
+        <h1>Manager Dashboard</h1>
+        <i class="fas fa-bell header-icon" aria-label="Notifications"></i>
+      </div> 
+
+      <!-- Search Bar -->
+      <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search transactions" id="searchInput" />
+      </div>
+    </div>
+
+    <!-- FLOAT SECTION -->
+    <div class="float-section glass-card">
+      <div class="float-card">
+        <i class="fas fa-wallet"></i>
+        <div>
+          <p>Float</p>
+          <h4>₵30,000.00</h4>
+        </div>
+      </div>
+
+      <div class="float-card">
+        <i class="fas fa-coins"></i>
+        <div>
+          <p>Balance</p>
+          <h4>₵20,000.00</h4>
+        </div>
+      </div>
+
+      <button class="float-btn" onclick="requestFloat()">Request Float</button>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="summary-card glass-card">
+      <i class="fas fa-chart-line"></i>
+      <div>
+        <p>Total Transaction Today</p>
+        <h4>GHC 30,000.00</h4>
+      </div>
+      <span class="success">+10% vs yesterday</span>
+    </div>
+
+    <div class="summary-card glass-card">
+      <i class="fas fa-mobile-alt"></i>
+      <div>
+        <p>Mobile Money Transaction</p>
+        <h4>15</h4>
+      </div>
+      <span class="success">+10% vs yesterday</span>
+    </div>
+
+    <div class="summary-card glass-card">
+      <i class="fas fa-university"></i>
+      <div>
+        <p>Bank Transactions</p>
+        <h4>15</h4>
+      </div>
+      <span class="danger">-10% vs yesterday</span>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="transactions glass-card">
+      <div class="transactions-header">
+        <h3>Recent Transactions</h3>
+        <button class="view-btn" onclick="viewAll()">View All</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="transactionTable">
+          <tr>
+            <td>Nana Yaw</td>
+            <td>MTN Deposit</td>
+            <td>+200</td>
+            <td>Oct 26, 2025</td>
+          </tr>
+          <tr>
+            <td>Sarah Doe</td>
+            <td>MTN Withdrawal</td>
+            <td>-200</td>
+            <td>Oct 25, 2025</td>
+          </tr>
+          <tr>
+            <td>Michael</td>
+            <td>Telecel Deposit</td>
+            <td>+200</td>
+            <td>Oct 24, 2025</td>
+          </tr>
+          <tr>
+            <td>Amelia</td>
+            <td>Access Deposit</td>
+            <td>+200</td>
+            <td>Oct 23, 2025</td>
+          </tr>
+          <tr>
+            <td>John</td>
+            <td>Absa Deposit</td>
+            <td>+200</td>
+            <td>Oct 22, 2025</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAVIGATION -->
+  <div class="bottom-nav">
+    <a href="#" aria-label="Dashboard"><i class="fas fa-home"></i><br>Dashboard</a>
+    <a href="#" aria-label="Transaction"><i class="fas fa-exchange-alt"></i><br>Transaction</a>
+    <a href="#" aria-label="History"><i class="fas fa-history"></i><br>History</a>
+    <a href="#" aria-label="Profile"><i class="fas fa-user"></i><br>Profile</a>
+  </div>
+
+  <script src="../js/index.js"></script>
+</body>
+</html>

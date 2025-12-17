@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Susu Contribution History</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { margin:0; font-family:"Poppins",sans-serif; background:#f8f9fa; min-height:100vh; }
+    .header { background:#9c27b0; color:white; padding:15px; text-align:center; font-size:20px; position:relative; }
+    .header .back { position:absolute; left:15px; top:15px; font-size:24px; cursor:pointer; }
+    .container { padding:20px; max-width:1000px; margin:auto; }
+    .search-bar { width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; font-size:16px; margin-bottom:15px; }
+    
+    .filter-card { background:white; padding:20px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1); margin-bottom:20px; }
+    .date-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px; }
+    .date-row input { flex:1; min-width:200px; padding:10px; border:1px solid #ddd; border-radius:8px; }
+    .apply-btn { background:#ffb300; color:black; border:none; padding:12px 30px; border-radius:50px; font-weight:bold; cursor:pointer; width:100%; font-size:16px; }
+    
+    .export-buttons { display:flex; gap:10px; margin:20px 0; }
+    .export-btn { flex:1; padding:12px; border:none; border-radius:10px; color:white; font-weight:bold; cursor:pointer; }
+    .pdf-btn { background:#e91e63; }
+    .excel-btn { background:#1e88e5; }
+
+    table { width:100%; border-collapse:collapse; background:white; border-radius:15px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+    th { background:#9c27b0; color:white; padding:15px; text-align:left; }
+    td { padding:15px; border-bottom:1px solid #eee; }
+    .amount { font-weight:bold; color:#7b1fa2; }
+    .group { background:#e1bee7; color:#4a148c; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:bold; }
+    .no-data { text-align:center; padding:40px; color:#777; font-size:18px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="back" onclick="navigate('index')"><i class="fas fa-arrow-left"></i></div>
+    Susu Contribution History
+  </div>
+
+  <div class="container">
+    <input type="text" class="search-bar" id="searchInput" placeholder="Search by name, phone or group..." />
+
+    <div class="filter-card">
+      <h3 style="margin-top:0; color:#9c27b0;">Filter Susu Contributions</h3>
+      <div class="date-row">
+        <input type="date" id="startDate" />
+        <input type="date" id="endDate" />
+      </div>
+      <button class="apply-btn" onclick="applyFilter()">Apply Filters</button>
+    </div>
+
+    <div class="export-buttons">
+      <button class="export-btn pdf-btn" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Download PDF</button>
+      <button class="export-btn excel-btn" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Download Excel</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>Group</th>
+          <th>Amount</th>
+          <th>Reference</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="transactionsBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const token = localStorage.getItem('token');
+    window.navigate = (page) => location.href = page + '.html';
+
+    let allContributions = [];
+
+    async function loadContributions() {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 30);
+
+      document.getElementById('startDate').value = start.toISOString().split('T')[0];
+      document.getElementById('endDate').value = end.toISOString().split('T')[0];
+
+      await fetchContributions(start, end);
+    }
+
+    async function fetchContributions(startDate, endDate) {
+      try {
+        const res = await fetch(`http://localhost:8000/api/transactions/susu?start=${startDate.toISOString().split('T')[0]}&end=${endDate.toISOString().split('T')[0]}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error("Failed");
+
+        const data = await res.json();
+        allContributions = data.success ? data.contributions : [];
+        renderTable(allContributions);
+      } catch (err) {
+        document.getElementById('transactionsBody').innerHTML = `<tr><td colspan="6" class="no-data">Error loading susu contributions</td></tr>`;
+      }
+    }
+
+    function renderTable(contributions) {
+      const tbody = document.getElementById('transactionsBody');
+      if (!contributions.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="no-data">No susu contributions found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = contributions.map(c => `
+        <tr>
+          <td>${c.customer_name}</td>
+          <td>${c.customer_phone}</td>
+          <td><span class="group">${c.susu_group || '—'}</span></td>
+          <td class="amount">GHS ${Number(c.amount).toFixed(2)}</td>
+          <td><small>${c.reference || 'Susu Contribution'}</small></td>
+          <td>${new Date(c.created_at).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    window.applyFilter = async () => {
+      const start = document.getElementById('startDate').value;
+      const end = document.getElementById('endDate').value;
+      if (!start || !end) return alert("Please select both dates");
+      await fetchContributions(new Date(start), new Date(end));
+    };
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      const filtered = allContributions.filter(c => 
+        c.customer_name?.toLowerCase().includes(term) || 
+        c.customer_phone?.includes(term) ||
+        c.susu_group?.toLowerCase().includes(term)
+      );
+      renderTable(filtered);
+    });
+
+    window.exportToPDF = async () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text("Susu Contributions Report", 14, 20);
+      doc.setFontSize(12);
+      doc.text(`Agent: ${user.first_name} ${user.last_name}`, 14, 30);
+
+      let y = 50;
+      allContributions.forEach(c => {
+        doc.text(`${new Date(c.created_at).toLocaleDateString()} | ${c.customer_name} | ${c.susu_group} | GHS ${c.amount}`, 14, y);
+        y += 10;
+        if (y > 270) { doc.addPage(); y = 20; }
+      });
+      doc.save("susu_contributions.pdf");
+    };
+
+    window.exportToExcel = () => {
+      const data = allContributions.map(c => ({
+        Date: new Date(c.created_at).toLocaleDateString(),
+        Customer: c.customer_name,
+        Phone: c.customer_phone,
+        Group: c.susu_group || "",
+        Amount: c.amount,
+        Reference: c.reference || "Susu Contribution"
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Susu");
+      XLSX.writeFile(wb, "susu_contributions.xlsx");
+    };
+
+    window.addEventListener('DOMContentLoaded', loadContributions);
+  </script>
+</body>
+</html>

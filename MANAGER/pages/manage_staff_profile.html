@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager - Employee Profile</title>
+  <link rel="stylesheet" href="../css/manage_staff_profile.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div class="container">
+
+         <header class="header">
+        <div class="header-top">
+         <i class="fas fa-bars header-icon left" onclick="toggleMenu()"></i>
+         <h1>Welcome, Nana!</h1>
+         <i class="fas fa-bell header-icon right"></i>
+        </div>
+
+  <div class="search-bar">
+    <i class="fas fa-search"></i>
+    <input type="text" placeholder="Search transactions...">
+  </div>
+</header>
+    
+
+  <div class="sidebar" id="sidebar">
+            <div class="menu-header">
+                <h3>Menu</h3>
+                <i class="fas fa-times close-btn" onclick="toggleMenu()"></i>
+            </div>
+            <ul class="menu-list">
+                <li class="menu-item" onclick="navigate('dashboard')">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item" onclick="navigate('transaction')">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Transaction</span>
+                </li>
+                <li class="menu-item" onclick="navigate('history')">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </li>
+                <li class="menu-item" onclick="navigate('profile')">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </li>
+                <li class="menu-item" onclick="navigate('notifications')">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </li>
+                <li class="menu-item" onclick="navigate('withdrawal')">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Withdrawal</span>
+                </li>
+            </ul>
+        </div>
+
+    <section class="profile-section">
+      <div class="profile-layout">
+        <!-- LEFT SIDE: Profile Picture -->
+        <div class="profile-pic-container">
+          <img src="../../ASSETS/images/profile.jpg" alt="Employee Picture" class="profile-pic">
+        </div>
+
+        <!-- RIGHT SIDE: Details -->
+        <div class="profile-details">
+          <h2 class="staff-name">Binney Nana Yaw Asante</h2>
+          <div class="staff-contact">
+            <p><i class="fas fa-envelope"></i> binney.charlesan1@gmail.com</p>
+            <p><i class="fas fa-phone"></i> +233 234 567 89</p>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn edit"><i class="fas fa-edit"></i> Edit</button>
+            <button class="btn delete"><i class="fas fa-trash-alt"></i> Delete</button>
+            <button class="btn suspend"><i class="fas fa-ban"></i> Suspend</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="security-section">
+      <h3>Security Settings</h3>
+      <div class="form-group">
+        <label>Current Password</label>
+        <input type="password" placeholder="Enter current password">
+      </div>
+      <div class="form-group">
+        <label>New Password</label>
+        <input type="password" placeholder="Enter new password">
+      </div>
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <input type="password" placeholder="Confirm new password">
+      </div>
+      <div class="buttons">
+        <button class="btn save"><i class="fas fa-save"></i> Save Changes</button>
+      <button class="btn save"><i class="fas fa-duties"></i> Asign Duties</button>
+      </div>
+      
+    </section>
+
+  </div>
+    <script src="../js/manage_staff_profile.js"></script>
+</body>
+</html>

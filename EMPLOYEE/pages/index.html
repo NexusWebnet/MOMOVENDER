@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Employee Dashboard — Record Keeper</title>
+  <link rel="stylesheet" href="../css/index.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="menu-header">
+      <h3>Menu</h3>
+      <i class="fas fa-times close-btn mobile-only" id="closeMenu"></i>
+    </div>
+
+    <ul class="menu-list">
+      <li class="menu-item active"><i class="fas fa-home"></i> Dashboard</li>
+      <li class="menu-item" onclick="navigate('momo-transactions')"><i class="fas fa-mobile-alt"></i> MoMo Transactions</li>
+      <li class="menu-item" onclick="navigate('bank-deposits')"><i class="fas fa-university"></i> Bank Deposit</li>
+      <li class="menu-item" onclick="navigate('bank-withdrawal-history')"><i class="fas fa-money-bill-wave"></i> Bank Withdrawal</li>
+      <li class="menu-item" onclick="navigate('sim-registration-history')"><i class="fas fa-user-plus"></i> Sim Registration</li>
+      <li class="menu-item" onclick="navigate('susu-history')"><i class="fas fa-piggy-bank"></i> Susu</li>
+      <li class="menu-item" onclick="navigate('airtime-history')"><i class="fas fa-phone-volume"></i> Airtime</li>
+      <li class="menu-item" onclick="navigate('history')"><i class="fas fa-history"></i> My History</li>
+      <li class="menu-item" onclick="navigate('profile')"><i class="fas fa-user"></i> Profile</li>
+    </ul>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <header class="header">
+      <div class="header-top">
+        <i class="fas fa-bars hamburger mobile-only" id="hamburger"></i>
+        <h1 id="welcomeText">Welcome!</h1>
+        <i class="fas fa-bell header-icon right" onclick="navigate('notifications')">
+          <span id="notificationBadge" class="badge">0</span>
+        </i>
+      </div>
+      <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search transactions..." id="searchInput">
+      </div>
+    </header>
+
+    <!-- 2x2 CARDS GRID -->
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-content">
+          <i class="fas fa-exchange-alt card-icon"></i>
+          <h2>Total Logged Today</h2>
+          <p class="amount" id="totalToday">GHC 0.00</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-content">
+          <i class="fas fa-mobile-alt card-icon"></i>
+          <h2>MoMo Logs</h2>
+          <p class="amount" id="momoToday">0</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-content">
+          <i class="fas fa-university card-icon"></i>
+          <h2>Bank Logs</h2>
+          <p class="amount" id="bankToday">0</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-content">
+          <i class="fas fa-file-alt card-icon"></i>
+          <h2>Total Records</h2>
+          <p class="amount" id="totalRecords">0</p>
+        </div>
+      </div>
+
+      <div class="stat-card commission">
+        <h3>Commission Today</h3>
+        <p id="commissionToday">GHC 0.00</p>
+      </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="buttons-sections">
+      <div class="button-row">
+        <div class="button-card" onclick="navigate('momo_transaction')"><i class="fas fa-mobile-alt"></i><span>Momo Transactions</span></div>
+        <div class="button-card" onclick="navigate('bank_deposit')"><i class="fas fa-university"></i><span>Bank Deposit</span></div>
+        <div class="button-card" onclick="navigate('bank_withdrawal')"><i class="fas fa-money-bill-wave"></i><span>Bank Withdrawal</span></div>
+      </div>
+      <div class="button-row">
+        <div class="button-card" onclick="navigate('registration-logger')"><i class="fas fa-user-plus"></i><span>Sim Registration</span></div>
+        <div class="button-card" onclick="navigate('susu-logger')"><i class="fas fa-piggy-bank"></i><span>Susu</span></div>
+        <div class="button-card" onclick="navigate('airtime-logger')"><i class="fas fa-phone-volume"></i><span>Airtime</span></div>
+      </div>
+    </div>
+
+    <h3>Transaction History</h3>
+    <h4>All Recent Transactions</h4>
+
+    <div class="transaction-table">
+      <div class="table-header">
+        <span>Customer & Type</span>
+        <span>Amount</span>
+        <span>Date & Time</span>
+        <span>Source</span>
+      </div>
+      <div class="table-body" id="transactionBody">
+        <div class="loading">Loading transactions...</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <aside class="right-panel">
+    <h3>Recent Notifications</h3>
+    <div id="notificationsList">Loading...</div>
+  </aside>
+</div>
+
+<script>
+// NAVIGATION FUNCTION — ALL BUTTONS NOW WORK
+function navigate(page) {
+  const pages = {
+    'momo-transactions': 'momo-transactions.html',
+    'bank-deposits': 'bank-deposits.html',
+    'bank-withdrawal-history': 'bank-withdrawal-history.html',
+    'sim-registration-history': 'sim-registration-history.html',
+    'susu-history': 'susu-history.html',
+    'airtime-history': 'airtime-history.html',
+    'history': 'my-history.html',
+    'profile': 'profile.html',
+    'notifications': 'notifications.html',
+
+    // Quick action buttons
+    'momo_transaction': 'momo_transaction.html',
+    'bank_deposit': 'bank_deposit.html',
+    'bank_withdrawal': 'bank_withdrawal.html',
+    'registration-logger': 'registration-logger.html',
+    'susu-logger': 'susu-logger.html',
+    'airtime-logger': 'airtime-logger.html'
+  };
+
+  if (pages[page]) {
+    window.location.href = pages[page];
+  } else {
+    alert('Page not found');
+  }
+}
+
+// HAMBURGER MENU — OPENS/CLOSES SIDEBAR
+const hamburger = document.getElementById('hamburger');
+const sidebar = document.getElementById('sidebar');
+const closeMenu = document.getElementById('closeMenu');
+
+hamburger.addEventListener('click', () => {
+  sidebar.classList.add('open');
+});
+
+closeMenu.addEventListener('click', () => {
+  sidebar.classList.remove('open');
+});
+
+// Close sidebar when clicking outside
+document.addEventListener('click', (e) => {
+  if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+    sidebar.classList.remove('open');
+  }
+});
+
+// Welcome message
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+document.getElementById('welcomeText').textContent = `Welcome, ${user.first_name || user.username || 'Employee'}!`;
+
+// Load dashboard data
+async function loadDashboard() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Please login first');
+    window.location.href = '/login.html';
+    return;
+  }
+
+  try {
+    const responses = await Promise.all([
+      fetch('/api/transactions/momo', { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ ok: false, json: async () => ({ data: [] }) })),
+      fetch('/api/transactions/bank', { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ ok: false, json: async () => ({ data: [] }) })),
+      fetch('/api/transactions/airtime', { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ ok: false, json: async () => ({ data: [] }) })),
+      fetch('/api/transactions/sim', { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ ok: false, json: async () => ({ data: [] }) }))
+    ]);
+
+    const [momo, bank, airtime, sim] = await Promise.all(responses.map(r => r.json()));
+
+    const allTransactions = [
+      ...(momo.data || []),
+      ...(bank.data || []),
+      ...(airtime.data || []),
+      ...(sim.data || [])
+    ];
+
+    allTransactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const today = new Date().toISOString().slice(0, 10);
+    const todayTxns = allTransactions.filter(t => t.created_at?.slice(0, 10) === today);
+
+    const totalToday = todayTxns.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+    const momoToday = todayTxns.filter(t => t.type?.toLowerCase().includes('momo') || t.service === 'momo').length;
+    const bankToday = todayTxns.filter(t => t.type?.toLowerCase().includes('bank') || t.service === 'bank').length;
+
+    document.getElementById('totalToday').textContent = `GHC ${totalToday.toFixed(2)}`;
+    document.getElementById('momoToday').textContent = momoToday;
+    document.getElementById('bankToday').textContent = bankToday;
+    document.getElementById('totalRecords').textContent = allTransactions.length;
+    document.getElementById('commissionToday').textContent = `GHC ${(totalToday * 0.015).toFixed(2)}`;
+
+    const tbody = document.getElementById('transactionBody');
+    tbody.innerHTML = '';
+
+    if (allTransactions.length === 0) {
+      tbody.innerHTML = '<div class="no-data">No transactions yet</div>';
+    } else {
+      allTransactions.slice(0, 20).forEach(t => {
+        const row = document.createElement('div');
+        row.className = 'table-row';
+        row.innerHTML = `
+          <span>${t.customer_name || 'Unknown'}<br><small>${t.type || t.service || 'Transaction'}</small></span>
+          <span class="amount">GHC ${parseFloat(t.amount || 0).toFixed(2)}</span>
+          <span>${new Date(t.created_at).toLocaleString()}</span>
+          <span class="source">${t.network || t.bank_name || t.service || 'N/A'}</span>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+  } catch (err) {
+    console.error('Dashboard load error:', err);
+    document.getElementById('transactionBody').innerHTML = '<div class="error">Error loading data. Try refreshing.</div>';
+  }
+}
+
+// Load on start
+loadDashboard();
+
+// Refresh every 30 seconds
+setInterval(loadDashboard, 30000);
+</script>
+
+</body>
+</html>

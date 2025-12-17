@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pay Salaries • My MoMo Shop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: 'Segoe UI', sans-serif; }
+    .glass { backdrop-filter: blur(16px) saturate(180%); background-color: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2); }
+    .sidebar { transition: transform 0.3s ease-in-out; }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+    }
+    #toast { display: none; }
+    #toast.show { display: block; animation: slideIn 0.5s, slideOut 0.5s 3.5s forwards; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes slideOut { to { transform: translateX(100%); opacity: 0; } }
+    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
+    @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    @media (max-width: 640px) {
+      .mobile-table th, .mobile-table td { font-size: 0.875rem; padding: 0.75rem 0.5rem; }
+    }
+  </style>
+</head>
+<body class="text-white min-h-screen">
+
+  <!-- Mobile Menu Button -->
+  <button id="menu-btn" class="md:hidden fixed top-6 left-6 z-50 bg-white/20 p-4 rounded-2xl backdrop-blur-lg shadow-xl">
+    <i class="fas fa-bars text-2xl"></i>
+  </button>
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar fixed md:static inset-y-0 left-0 z-40 w-80 glass shadow-2xl flex flex-col">
+      <div class="p-8 text-center border-b border-white/20">
+        <div class="w-28 h-28 bg-white/20 rounded-full mx-auto mb-4 flex items-center justify-center text-5xl font-bold">A</div>
+        <h2 class="text-3xl font-bold">Welcome Admin</h2>
+        <p class="text-purple-200 mt-2">Queen of the Shop</p>
+      </div>
+      <nav class="flex-1 p-6">
+        <ul class="space-y-4">
+          <li><a href="admin.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-tachometer-alt text-xl"></i><span class="text-xl font-medium">Overview</span></a></li>
+          <li><a href="admin-agents.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-users text-xl"></i><span class="text-xl font-medium">Manage Agents</span></a></li>
+          <li><a href="admin-float.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-wallet text-xl"></i><span class="text-xl font-medium">Float Control</span></a></li>
+          <li><a href="admin-payroll.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl bg-white/20 shadow-lg"><i class="fas fa-money-bill-wave text-xl"></i><span class="text-xl font-medium">Pay Salaries</span></a></li>
+          <li><a href="admin-reports.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-chart-bar text-xl"></i><span class="text-xl font-medium">Reports</span></a></li>
+        </ul>
+      </nav>
+      <div class="p-6 border-t border-white/20 text-center"><p class="text-sm opacity-80">© 2025 My MoMo Empire</p></div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-4 sm:p-8 md:p-12">
+      <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <h1 class="text-4xl sm:text-5xl font-bold">Pay Salaries & Commissions</h1>
+          <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <button onclick="openPayModal()" class="bg-green-600 hover:bg-green-700 px-6 py-4 rounded-2xl font-bold w-full sm:w-auto"><i class="fas fa-money-check-alt mr-2"></i>Pay Selected</button>
+          </div>
+        </div>
+
+        <!-- Period Selector -->
+        <div class="glass p-6 rounded-3xl mb-8">
+          <div class="flex flex-col sm:flex-row gap-4 items-center">
+            <label class="text-lg font-bold">Payroll Period:</label>
+            <input type="date" id="period-start" class="px-6 py-4 rounded-2xl bg-white/10 text-white">
+            <span>to</span>
+            <input type="date" id="period-end" class="px-6 py-4 rounded-2xl bg-white/10 text-white">
+            <button onclick="loadPayroll(true)" class="bg-white/20 hover:bg-white/30 px-8 py-4 rounded-2xl"><i class="fas fa-sync mr-2"></i>Load</button>
+          </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Total Payable</h3><p id="stat-total" class="text-4xl font-bold mt-2 text-yellow-400">-</p></div>
+          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Agents Due</h3><p id="stat-due" class="text-4xl font-bold mt-2 text-green-400">-</p></div>
+          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Paid This Period</h3><p id="stat-paid" class="text-4xl font-bold mt-2 text-blue-400">-</p></div>
+          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Pending</h3><p id="stat-pending" class="text-4xl font-bold mt-2 text-orange-400">-</p></div>
+        </div>
+
+        <!-- Payroll Table -->
+        <div class="glass rounded-3xl overflow-hidden shadow-2xl">
+          <div class="overflow-x-auto">
+            <table class="w-full mobile-table">
+              <thead class="bg-white/10">
+                <tr>
+                  <th class="p-6 text-left"><input type="checkbox" id="select-all"></th>
+                  <th class="p-6 text-left text-xl font-bold">Staff Name</th>
+                  <th class="p-6 text-left text-xl font-bold">Role</th>
+                  <th class="p-6 text-left text-xl font-bold">Branch</th>
+                  <th class="p-6 text-left text-xl font-bold">Earned</th>
+                  <th class="p-6 text-left text-xl font-bold">Paid</th>
+                  <th class="p-6 text-left text-xl font-bold">Pending</th>
+                  <th class="p-6 text-left text-xl font-bold">Status</th>
+                  <th class="p-6 text-left text-xl font-bold">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="payroll-table">
+                <tr><td colspan="9" class="p-12 text-center"><div class="skeleton h-20 w-full rounded"></div></td></tr>
+              </tbody>
+            </table>
+            <div class="p-6 text-center">
+              <button id="load-more" onclick="loadPayroll()" class="bg-white/20 hover:bg-white/30 px-8 py-4 rounded-2xl hidden">Load More</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 max-w-sm w-full">
+    <div class="bg-white text-gray-800 px-8 py-5 rounded-2xl shadow-2xl flex items-center gap-4">
+      <i id="toast-icon" class="fas fa-check-circle text-3xl text-green-500"></i>
+      <span id="toast-message" class="font-bold text-xl"></span>
+    </div>
+  </div>
+
+  <!-- Pay Modal -->
+  <div id="pay-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+    <div class="glass p-6 sm:p-10 rounded-3xl max-w-md w-full">
+      <h2 class="text-3xl font-bold text-center mb-8">Pay Salary / Commission</h2>
+      <form id="pay-form">
+        <div class="space-y-6">
+          <div id="selected-agents" class="text-sm opacity-80 mb-4">Selected: <span id="agent-count">0</span> agent(s)</div>
+          <div class="text-lg font-bold">Total Amount: <span id="total-amount" class="text-green-400">GHS 0.00</span></div>
+          <select id="payout-type" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white">
+            <option value="salary">Salary</option>
+            <option value="commission">Commission</option>
+            <option value="bonus">Bonus</option>
+            <option value="advance">Advance</option>
+          </select>
+          <select id="payment-method" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white">
+            <option value="momo">MoMo</option>
+            <option value="bank">Bank Transfer</option>
+            <option value="cash">Cash</option>
+          </select>
+          <textarea id="pay-note" placeholder="Note (optional)" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300" rows="3"></textarea>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-6 mt-10">
+          <button type="submit" class="flex-1 bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700">Pay Now</button>
+          <button type="button" onclick="closePay()" class="flex-1 bg-gray-500 text-white py-4 rounded-2xl">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token') || '';
+    let currentPage = 1;
+    let hasMore = true;
+
+    function showToast(message, success = true) {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toast-icon');
+      const msg = document.getElementById('toast-message');
+      msg.textContent = message;
+      icon.className = success ? "fas fa-check-circle text-3xl text-green-500" : "fas fa-exclamation-circle text-3xl text-red-500";
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    function getPeriod() {
+      const start = document.getElementById('period-start').value || new Date().toISOString().slice(0,10);
+      const end = document.getElementById('period-end').value || start;
+      return { start, end };
+    }
+
+    async function loadPayroll(reset = false) {
+      if (reset) { currentPage = 1; hasMore = true; document.getElementById('payroll-table').innerHTML = ''; }
+      if (!hasMore && !reset) return;
+
+      const { start, end } = getPeriod();
+
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: 15,
+        start,
+        end
+      });
+
+      try {
+        // CORRECTED ROUTE — NO MORE 404
+        const res = await fetch(`/api/payroll/admin?${params}`, { 
+          headers: { Authorization: `Bearer ${token}` } 
+        });
+        
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json();
+
+        if (reset) {
+          document.getElementById('stat-total').textContent = `GHS ${Number(data.stats?.totalPayable || 0).toLocaleString()}`;
+          document.getElementById('stat-due').textContent = data.stats?.due || 0;
+          document.getElementById('stat-paid').textContent = `GHS ${Number(data.stats?.paid || 0).toLocaleString()}`;
+          document.getElementById('stat-pending').textContent = `GHS ${Number(data.stats?.pending || 0).toLocaleString()}`;
+        }
+
+        const tbody = document.getElementById('payroll-table');
+        if (reset) tbody.innerHTML = '';
+
+        if (!data.agents || data.agents.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="9" class="p-12 text-center text-purple-300 text-xl">No payroll data</td></tr>';
+          hasMore = false;
+          return;
+        }
+
+        data.agents.forEach(agent => {
+          const pending = (agent.earned || 0) - (agent.paid || 0);
+
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-white/10';
+          tr.innerHTML = `
+            <td class="p-6"><input type="checkbox" class="pay-checkbox" value="${agent.id}" data-amount="${pending}"></td>
+            <td class="p-6 font-bold text-xl flex items-center gap-4">
+              <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl">
+                ${agent.first_name?.[0] || '?'}${agent.last_name?.[0] || ''}
+              </div>
+              <div>
+                ${agent.first_name || ''} ${agent.last_name || ''}
+                <span class="block text-sm opacity-80">@${agent.username || 'unknown'}</span>
+              </div>
+            </td>
+            <td class="p-6">
+              <span class="px-5 py-2 rounded-full text-sm font-bold ${agent.role === 'manager' ? 'bg-purple-600/30 text-purple-300' : 'bg-blue-600/30 text-blue-300'}">
+                ${agent.role === 'manager' ? 'Manager' : 'Employee'}
+              </span>
+            </td>
+            <td class="p-6">${agent.branch_name || 'No Branch'}</td>
+            <td class="p-6 text-green-400 font-bold">GHS ${Number(agent.earned || 0).toLocaleString()}</td>
+            <td class="p-6 text-blue-400 font-bold">GHS ${Number(agent.paid || 0).toLocaleString()}</td>
+            <td class="p-6 text-orange-400 font-bold text-xl">GHS ${Number(pending).toLocaleString()}</td>
+            <td class="p-6">
+              <span class="px-6 py-2 rounded-full font-bold ${pending > 0 ? 'bg-orange-500/20 text-orange-300' : 'bg-green-500/20 text-green-300'}">
+                ${pending > 0 ? 'Pending' : 'Paid'}
+              </span>
+            </td>
+            <td class="p-6">
+              <button onclick="paySingle(${agent.id}, ${pending})" class="text-green-400 hover:text-green-200 font-bold">Pay Now</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        document.querySelectorAll('.pay-checkbox').forEach(cb => {
+          cb.addEventListener('change', updateTotalAmount);
+        });
+
+        hasMore = data.agents.length === 15;
+        document.getElementById('load-more').classList.toggle('hidden', !hasMore);
+        currentPage++;
+      } catch (err) {
+        console.error("Payroll error:", err);
+        showToast("Failed to load payroll", false);
+      }
+    }
+
+    function updateTotalAmount() {
+      let total = 0;
+      document.querySelectorAll('.pay-checkbox:checked').forEach(cb => {
+        total += parseFloat(cb.dataset.amount || 0);
+      });
+      document.getElementById('total-amount').textContent = `GHS ${total.toLocaleString()}`;
+      document.getElementById('agent-count').textContent = document.querySelectorAll('.pay-checkbox:checked').length;
+    }
+
+    function openPayModal() {
+      const selected = document.querySelectorAll('.pay-checkbox:checked').length;
+      if (selected === 0) return showToast("Select at least one agent", false);
+      updateTotalAmount();
+      document.getElementById('pay-modal').classList.remove('hidden');
+    }
+
+    function closePay() {
+      document.getElementById('pay-modal').classList.add('hidden');
+    }
+
+    function paySingle(id, amount) {
+      document.querySelectorAll('.pay-checkbox').forEach(cb => cb.checked = (cb.value == id));
+      updateTotalAmount();
+      openPayModal();
+    }
+
+    document.getElementById('select-all').addEventListener('change', e => {
+      document.querySelectorAll('.pay-checkbox').forEach(cb => cb.checked = e.target.checked);
+      updateTotalAmount();
+    });
+
+    document.getElementById('pay-form').onsubmit = async e => {
+      e.preventDefault();
+      const agents = Array.from(document.querySelectorAll('.pay-checkbox:checked')).map(cb => cb.value);
+      const amount = document.getElementById('total-amount').textContent.replace(/[^0-9.-]+/g,"");
+      const type = document.getElementById('payout-type').value;
+      const method = document.getElementById('payment-method').value;
+      const note = document.getElementById('pay-note').value;
+
+      try {
+        const res = await fetch('/api/payroll/admin/pay', {  // CORRECTED PAYMENT ROUTE
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ agent_ids: agents, amount, payout_type: type, method, note })
+        });
+
+        if (!res.ok) throw new Error('Payment failed');
+        
+        showToast(`Successfully paid ${agents.length} agent(s)`);
+        closePay();
+        loadPayroll(true);
+      } catch (err) {
+        showToast("Payment failed", false);
+      }
+    };
+
+    // Mobile menu
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+
+    // Default period
+    const today = new Date().toISOString().slice(0,10);
+    const lastMonth = new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0,10);
+    document.getElementById('period-start').value = lastMonth;
+    document.getElementById('period-end').value = today;
+
+    // Load on start
+    loadPayroll(true);
+  </script>
+</body>
+</html>

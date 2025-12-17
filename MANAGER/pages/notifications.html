@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Notifications</title>
+<link rel="stylesheet" href="../css/notifications.css">
+</head>
+<body>
+
+<h2>Your Notifications</h2>
+
+<div id="notification-list"></div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+
+async function loadNotifications() {
+    const response = await fetch(`http://localhost:8000/api/notifications/${user.id}`);
+    const data = await response.json();
+
+    const container = document.getElementById("notification-list");
+
+    if (data.notifications.length === 0) {
+        container.innerHTML = "<p>No notifications yet.</p>";
+        return;
+    }
+
+    container.innerHTML = data.notifications.map(n => `
+        <div class="notification ${n.status}">
+            <p>${n.message}</p>
+            <small>${n.created_at}</small>
+        </div>
+    `).join("");
+}
+
+loadNotifications();
+</script>
+
+</body>
+</html>

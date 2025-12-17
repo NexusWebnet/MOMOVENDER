@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Message Center</title>
+<link rel="stylesheet" href="../css/chat.css">
+</head>
+<body>
+
+<h2>Messages</h2>
+
+<div id="chat-box"></div>
+
+<div class="chat-input">
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+
+async function loadMessages() {
+    const response = await fetch(`http://localhost:8000/api/chat/${user.id}`);
+    const data = await response.json();
+
+    const chatBox = document.getElementById("chat-box");
+
+    chatBox.innerHTML = data.messages.map(msg => `
+        <div class="message ${msg.sender_id === user.id ? 'sent' : 'received'}">
+            <p>${msg.message}</p>
+            <small>${msg.created_at}</small>
+        </div>
+    `).join("");
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+async function sendMessage() {
+    const message = document.getElementById("messageInput").value;
+    if (!message.trim()) return;
+
+    // Sender sends to admin (id = 1), you can modify based on your system roles
+    const receiver_id = prompt("Enter receiver ID (admin=1, manager=2, etc.)");
+
+    await fetch("http://localhost:8000/api/chat/send", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            sender_id: user.id,
+            receiver_id,
+            message
+        })
+    });
+
+    document.getElementById("messageInput").value = "";
+    loadMessages();
+}
+
+loadMessages();
+setInterval(loadMessages, 3000); // auto refresh chat every 3 secs
+</script>
+
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MoMo Vendor Manager - Live Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .sidebar, .notif-sidebar { transition: transform 0.3s ease-in-out; }
+    @media (max-width: 1023px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .notif-sidebar { transform: translateX(100%); }
+      .notif-sidebar.open { transform: translateX(0); }
+    }
+    .chart-bar { background: linear-gradient(to top, #fb923c, #fed7aa); transition: height 0.8s ease; }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+  </style>
+</head>
+<body class="bg-orange-50 text-gray-800 font-sans min-h-screen flex">
+
+  <!-- Mobile Menu Button -->
+  <button id="mobile-menu-btn" class="lg:hidden fixed top-4 left-4 z-50 bg-white p-3 rounded-xl shadow-lg">
+    <i class="fas fa-bars text-xl text-orange-600"></i>
+  </button>
+
+  <!-- Left Sidebar -->
+  <aside id="sidebar" class="sidebar fixed lg:static inset-y-0 left-0 z-40 w-64 bg-gradient-to-b from-orange-600 to-orange-700 text-white flex flex-col">
+    <div class="p-6 border-b border-orange-800">
+      <h2 class="text-2xl font-bold flex items-center gap-3">
+        <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+          <i class="fas fa-mobile-alt text-2xl"></i>
+        </div>
+        MoMo Vendor Hub
+      </h2>
+      <p class="text-orange-200 text-sm mt-1">Manager Panel</p>
+    </div>
+
+    <nav class="flex-1 p-4">
+      <ul class="space-y-2">
+        <li><a href="#" class="flex items-center gap-4 py-3 px-4 rounded-lg bg-white bg-opacity-20">
+          <i class="fas fa-tachometer-alt"></i> Dashboard
+        </a></li>
+       <li>
+       <a href="/MANAGER/pages/agents.html" class="flex items-center gap-4 py-3 px-4 rounded-lg hover:bg-white hover:bg-opacity-10 transition">
+         <i class="fas fa-users-cog"></i> Manage Agents
+       </a>
+      </li>
+        <li>
+         <a href="/MANAGER/pages/transactions.html" class="flex items-center gap-4 py-3 px-4 rounded-lg hover:bg-white hover:bg-opacity-10 transition">
+           <i class="fas fa-exchange-alt"></i> Branch Transactions
+         </a>
+         </li>
+       <li>
+         <a href="/MANAGER/pages/manager-float.html" class="flex items-center gap-4 py-3 px-4 rounded-lg hover:bg-white hover:bg-opacity-10 transition">
+           <i class="fas fa-wallet"></i> My Branch Float
+         </a>
+        </li>
+        <li><a href="/MANAGER/pages/reports.html" class="flex items-center gap-4 py-3 px-4 rounded-lg hover:bg-white hover:bg-opacity-10 transition">
+          <i class="fas fa-chart-bar"></i> Reports
+        </a></li>
+      </ul>
+    </nav>
+
+    <div class="p-6 border-t border-orange-800">
+      <div class="flex items-center gap-4">
+        <img id="manager-photo" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Manager" class="w-12 h-12 rounded-full ring-2 ring-white"/>
+        <div>
+          <p id="manager-name" class="font-bold">Kwame Osei</p>
+          <p class="text-sm text-orange-200">Regional Manager</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Overlay -->
+  <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
+
+  <!-- Main Content + Notification Sidebar -->
+  <div class="flex-1 flex flex-col lg:flex-row">
+    <main class="flex-1 p-6 lg:p-10 overflow-y-auto">
+      <div class="flex justify-between items-center mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-800">Live Dashboard</h1>
+          <p class="text-gray-600">Real-time MoMo vendor operations • <span class="text-green-600 font-bold">● Live</span></p>
+        </div>
+        <button id="notif-btn" class="relative bg-orange-600 text-white p-4 rounded-xl shadow-lg">
+          <i class="fas fa-bell text-xl"></i>
+          <span id="notif-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">0</span>
+        </button>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <p class="text-sm text-gray-500">Daily Transactions</p>
+              <p id="daily-trans" class="text-3xl font-bold mt-2">GHS 0</p>
+              <p class="text-sm text-green-600 mt-2">Loading...</p>
+            </div>
+            <i class="fas fa-money-bill-wave text-orange-500 text-2xl"></i>
+          </div>
+          <button onclick="openModal('transModal')" class="w-full bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition font-medium">
+            View Details →
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <p class="text-sm text-gray-500">Active Agents</p>
+              <p id="active-agents" class="text-3xl font-bold mt-2">0</p>
+              <p class="text-sm text-gray-600 mt-2">Loading...</p>
+            </div>
+            <i class="fas fa-user-check text-green-500 text-2xl"></i>
+          </div>
+          <button onclick="openModal('agentsModal')" class="w-full bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition font-medium">
+            View Agents →
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <p class="text-sm text-gray-500">Pending Withdrawals</p>
+              <p id="pending-withdraw" class="text-3xl font-bold mt-2 text-red-600">0</p>
+              <p class="text-sm text-red-600 mt-2">Loading...</p>
+            </div>
+            <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold">URGENT</span>
+          </div>
+          <button onclick="openModal('withdrawModal')" class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition font-medium">
+            Approve Now →
+          </button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-md p-6 border border-gray-100">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <p class="text-sm text-gray-500">Total Float Balance</p>
+              <p id="float-balance" class="text-3xl font-bold mt-2">GHS 0</p>
+              <p class="text-sm text-green-600 mt-2">Loading...</p>
+            </div>
+            <i class="fas fa-wallet text-purple-600 text-2xl"></i>
+          </div>
+          <button onclick="openModal('floatModal')" class="w-full bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition font-medium">
+            View Balance →
+          </button>
+        </div>
+      </div>
+
+      <!-- Charts & Activity -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-md p-6">
+          <h3 class="text-lg font-bold mb-6">Live Transaction Volume (GHS)</h3>
+          <div id="chart-container" class="h-64 flex items-end justify-between gap-4">
+            <!-- Will be filled by JS -->
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-md p-6">
+          <h3 class="text-lg font-bold mb-6 flex items-center justify-between">
+            Live Activity <span class="text-green-600 animate-pulse">●</span>
+          </h3>
+          <div id="live-activity" class="space-y-4 text-sm max-h-96 overflow-y-auto"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Notification Sidebar -->
+    <aside id="notif-sidebar" class="notif-sidebar fixed lg:static inset-y-0 right-0 z-40 w-80 bg-white shadow-2xl flex flex-col border-l border-gray-200">
+      <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+        <h3 class="text-xl font-bold">Notifications (<span id="notif-total">0</span>)</h3>
+        <button id="close-notif" class="lg:hidden text-gray-500 hover:text-gray-700">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      <div id="notifications-list" class="flex-1 overflow-y-auto p-4">
+        <p class="text-center text-gray-500 py-8">Loading notifications...</p>
+      </div>
+      <div class="p-4 border-t border-gray-200">
+        <button onclick="clearNotifications()" class="w-full bg-orange-600 text-white py-3 rounded-xl font-semibold hover:bg-orange-700 transition">
+          Mark All as Read
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Modals (same as before, just functions added below) -->
+  <!-- ... keep your modals here ... -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // ==================== MOBILE MENU & NOTIFICATIONS ====================
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const notifBtn = document.getElementById('notif-btn');
+    const notifSidebar = document.getElementById('notif-sidebar');
+    const closeNotif = document.getElementById('close-notif');
+
+    mobileMenuBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('hidden');
+    });
+
+    notifBtn.addEventListener('click', () => {
+      notifSidebar.classList.add('open');
+      overlay.classList.remove('hidden');
+    });
+
+    closeNotif.addEventListener('click', () => {
+      notifSidebar.classList.remove('open');
+      overlay.classList.add('hidden');
+    });
+
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      notifSidebar.classList.remove('open');
+      overlay.classList.add('hidden');
+    });
+
+    // ==================== MODAL FUNCTIONS ====================
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+      overlay.classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+      overlay.classList.add('hidden');
+    }
+
+    // Close modal when clicking outside
+    document.querySelectorAll('[id$="Modal"]').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal(modal.id);
+      });
+    });
+
+    // ==================== FETCH REAL DATA FROM NODE.JS BACKEND ====================
+    async function loadDashboard() {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/manager-dashboard', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+
+        if (res.status === 401 || res.status === 403) {
+          window.location.href = '/login.html';
+          return;
+        }
+
+        const { data } = await res.json();
+
+        // Update header
+        document.querySelector('h1').innerHTML = `Welcome back, ${data.managerName || 'Manager'}!`;
+        document.getElementById('manager-name').textContent = data.managerName || 'Manager';
+
+        // Update stats
+        document.getElementById('daily-trans').textContent = 'GHS ' + Number(data.daily_transactions || 0).toLocaleString();
+        document.getElementById('active-agents').textContent = data.active_agents || 0;
+        document.getElementById('pending-withdraw').textContent = data.pending_withdrawals || 0;
+        document.getElementById('float-balance').textContent = 'GHS ' + Number(data.total_float || 0).toLocaleString();
+        document.getElementById('notif-count').textContent = data.unread_notifications > 0 ? data.unread_notifications : '';
+        document.getElementById('notif-total').textContent = data.unread_notifications || 0;
+
+        // Live Activity
+        // const activityDiv = document.getElementById('live-activity');
+        // activityDiv.innerHTML = '';
+        // (data.recent_activity || []).forEach(act => {
+        //   const div = document.createElement('div');
+        //   div.className = 'flex items-center gap-3';
+        //   div.innerHTML = `<div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
+        //     <p><strong>${act.name}</strong> ${act.action} • GHS ${Number(act.amount).toLocaleString()} ${act.network ? '('+act.network+')' : ''}</p>`;
+        //   activityDiv.appendChild(div);
+        // });
+
+
+
+        // Recent Activity
+  const activityDiv = document.getElementById('live-activity');
+  activityDiv.innerHTML = data.recent_activity.map(act => `
+    <div class="flex items-center gap-3">
+      <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
+      <p><strong>${act.name}</strong> ${act.action} • GHS ${act.amount} ${act.network ? `(${act.network})` : ''}</p>
+    </div>
+  `).join('');
+
+
+
+  
+
+  const socket = io();
+  socket.on('dashboardUpdate', () => {
+    console.log('New transaction in branch → refreshing dashboard');
+    loadDashboard();
+  });
+  socket.on('newTransaction', () => {
+    loadDashboard(); // Global refresh
+  });
+
+
+
+        // Simple animated chart (last 7 days fake but pretty)
+        const chart = document.getElementById('chart-container');
+        chart.innerHTML = '';
+        const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        [65, 82, 78, 95, 88, 72, 98].forEach((h, i) => {
+          const bar = document.createElement('div');
+          bar.className = 'flex flex-col items-center flex-1';
+          bar.innerHTML = `
+            <div class="chart-bar w-full rounded-t-lg" style="height: ${h}%"></div>
+            <p class="text-sm text-gray-600 mt-4 font-medium">${days[i]}</p>
+          `;
+          chart.appendChild(bar);
+        });
+
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+      }
+    }
+     
+    // Update every 4 seconds
+    setInterval(loadDashboard, 4000);
+    loadDashboard();
+  </script>
+</body>
+</html>

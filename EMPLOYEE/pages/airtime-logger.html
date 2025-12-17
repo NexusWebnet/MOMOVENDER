@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Airtime Purchase</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { margin:0; font-family:"Poppins",sans-serif; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#222; min-height:100vh; }
+    .container { width:90%; max-width:450px; margin:40px auto; background:#fff; padding:25px; border-radius:15px; box-shadow:0 10px 30px rgba(0,0,0,0.2); }
+    .back-btn { background:none; border:none; color:#4e34e2; font-size:16px; cursor:pointer; margin-bottom:15px; }
+    h2 { text-align:center; margin-bottom:20px; color:#4e34e2; }
+    label { display:block; margin:10px 0 5px; font-weight:600; }
+    input, select { width:100%; padding:12px; border-radius:10px; border:1px solid #ccc; box-sizing:border-box; }
+    button[type="submit"] { margin-top:20px; width:100%; padding:14px; border:none; background:#4e34e2; color:white; border-radius:10px; font-size:16px; cursor:pointer; }
+    .result { margin-top:20px; padding:15px; border-radius:10px; text-align:center; display:none; }
+    .success { background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
+    .error   { background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
+    .receipt { margin-top:20px; padding:15px; background:#f8f9fa; border:1px solid #4e34e2; border-radius:10px; display:none; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <button class="back-btn" onclick="navigate('index')"><i class="fas fa-arrow-left"></i> Back to Dashboard</button>
+  <h2>Airtime Purchase</h2>
+
+  <form id="airtimeForm">
+    <label for="customerName">Customer Name</label>
+    <input type="text" id="customerName" placeholder="Enter full name" required>
+
+    <label for="customerPhone">Customer Phone</label>
+    <input type="tel" id="customerPhone" placeholder="0241234567" required>
+
+    <label for="network">Network</label>
+    <select id="network" required>
+      <option value="">Select Network</option>
+      <option value="MTN">MTN</option>
+      <option value="Vodafone">Vodafone</option>
+      <option value="AirtelTigo">AirtelTigo</option>
+      <option value="Glo">Glo</option>
+    </select>
+
+    <label for="amount">Amount (GHS)</label>
+    <input type="number" id="amount" step="0.01" min="0.01" placeholder="5.00" required>
+
+    <label for="reference">Reference (optional)</label>
+    <input type="text" id="reference" placeholder="e.g. Top-up for customer">
+
+    <button type="submit">Buy Airtime</button>
+  </form>
+
+  <div id="result" class="result"></div>
+  <div id="receipt" class="receipt"></div>
+</div>
+
+<script>
+  // === AUTH CHECK ===
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const token = localStorage.getItem("token");
+
+  if (!token || !user?.id) {
+    alert("You must be logged in!");
+    window.location.href = "login.html";
+  }
+
+  function navigate(page) {
+    window.location.href = page + ".html";
+  }
+
+  function showResult(message, type = "success") {
+    const el = document.getElementById("result");
+    el.className = `result ${type}`;
+    el.textContent = message;
+    el.style.display = "block";
+  }
+
+  function showReceipt(data) {
+    const r = document.getElementById("receipt");
+    r.innerHTML = `
+      <h3>Transaction Successful</h3>
+      <p><strong>Customer:</strong> ${data.customer_name}</p>
+      <p><strong>Phone:</strong> ${data.customer_phone}</p>
+      <p><strong>Network:</strong> ${data.network}</p>
+      <p><strong>Amount:</strong> GHS ${Number(data.amount).toFixed(2)}</p>
+      <p><strong>Reference:</strong> ${data.reference || "—"}</p>
+      <p><strong>Employee:</strong> ${data.employee_name}</p>
+      <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+    `;
+    r.style.display = "block";
+  }
+
+  // === MAIN SUBMIT HANDLER ===
+  document.getElementById("airtimeForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    // Reset previous messages
+    document.getElementById("result").style.display = "none";
+    document.getElementById("receipt").style.display = "none";
+
+    const payload = {
+      customer_name: document.getElementById("customerName").value.trim(),
+      customer_phone: document.getElementById("customerPhone").value.trim(),
+      network: document.getElementById("network").value,
+      amount: parseFloat(document.getElementById("amount").value),
+      reference: document.getElementById("reference").value.trim() || null
+      // employee_id is added by JWT middleware on backend → no need to send it from frontend
+    };
+
+    try {
+      const response = await fetch("http://localhost:8000/airtime/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      // IMPORTANT: Always check if response is actually JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        throw new Error("Server returned HTML instead of JSON. Check if the route exists!");
+      }
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        showResult("Airtime logged successfully!", "success");
+        showReceipt(data.record);
+        e.target.reset();
+      } else {
+        showResult(data.message || "Something went wrong", "error");
+      }
+
+    } catch (err) {
+      console.error("Fetch error:", err);
+      showResult("Network or Server Error – Check console", "error");
+    }
+  });
+</script>
+
+</body>
+</html>

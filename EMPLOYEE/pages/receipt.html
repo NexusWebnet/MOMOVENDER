@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction Receipt • My Shop</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      font-family: 'Poppins', sans-serif;
+      color: #333;
+    }
+
+    .receipt-container {
+      width: 100%; max-width: 420px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0px 10px 30px rgba(0,0,0,0.2);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .header {
+      background: #6a5acd;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.3);
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+
+    .success-badge {
+      background: #10b981;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-size: 14px;
+      margin: 10px auto;
+      display: inline-block;
+      font-weight: bold;
+    }
+
+    .section { padding: 20px; }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px dashed #eee;
+      font-size: 15px;
+    }
+    .row span:first-child { font-weight: 600; }
+    .row:last-child { border-bottom: none; }
+
+    .amount {
+      font-size: 26px;
+      font-weight: 800;
+      color: #10b981 !important;
+    }
+
+    #qrcode { display:flex; justify-content:center; padding:20px; background:#f9f9f9; }
+
+    .btn-print {
+      width: 100%; max-width: 420px;
+      background: #6a5acd;
+      color: #fff;
+      font-weight: bold;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 18px;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(106,90,205,0.4);
+      transition: 0.3s;
+    }
+    .btn-print:hover {
+      transform: translateY(-2px);
+      background: #5a4bcf;
+    }
+
+    @media print {
+      body, .btn-print { display: none; }
+      .receipt-container { box-shadow: none; margin: 0; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="receipt-container">
+    <div class="header">
+      <img src="../../ASSETS/images/profile.jpg" class="logo">
+      <h2>My Shop</h2>
+      <p>Official Transaction Receipt</p>
+    </div>
+
+    <div style="text-align:center;">
+      <div class="success-badge">Transaction Successful</div>
+    </div>
+
+    <div class="section">
+      <div class="row"><span>Agent:</span> <span id="agentName">-</span></div>
+      <div class="row"><span>Customer:</span> <span id="custName">-</span></div>
+      <div class="row"><span>Phone:</span> <span id="custPhone">-</span></div>
+      <div class="row"><span>Type:</span> <span id="transType">-</span></div>
+      <div class="row" id="networkRow"><span>Network:</span> <span id="network">-</span></div>
+      <div class="row" id="bankRow"><span>Bank:</span> <span id="bankName">-</span></div>
+      <div class="row" id="accountRow"><span>Account Number:</span> <span id="accountNumber">-</span></div>
+      <div class="row"><span>Amount:</span> <span id="amount" class="amount">GHS 0.00</span></div>
+      <div class="row"><span>Reference:</span> <span id="reference">-</span></div>
+      <div class="row"><span>Date & Time:</span> <span id="date">-</span></div>
+      <div class="row"><span>Transaction ID:</span> <span id="transID">-</span></div>
+      <div class="row"><span>MoMo Ref:</span> <span id="momoRef">N/A</span></div>
+    </div>
+
+    <div id="qrcode"></div>
+  </div>
+
+  <button class="btn-print" onclick="printReceipt()">Print Receipt</button>
+
+  <script>
+    async function loadReceipt() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tid = urlParams.get('tid');
+
+      if (!tid) {
+        document.body.innerHTML =
+          "<h2 style='color:white;text-align:center;margin-top:50px;'>Invalid receipt link.</h2>";
+        return;
+      }
+
+      const res = await fetch(`http://localhost:8000/records/sim/${tid}`);
+      const data = await res.json();
+
+      if (!data) {
+        document.body.innerHTML =
+          "<h2 style='color:white;text-align:center;margin-top:50px;'>Receipt not found.</h2>";
+        return;
+      }
+
+      document.getElementById("agentName").textContent = data.agent_name || "-";
+      document.getElementById("custName").textContent = data.customer_name || "-";
+      document.getElementById("custPhone").textContent = data.customer_phone || "-";
+      document.getElementById("amount").textContent = `GHS ${Number(data.amount || 0).toFixed(2)}`;
+      document.getElementById("reference").textContent = data.reference || "N/A";
+      document.getElementById("date").textContent = new Date(data.date || Date.now()).toLocaleString();
+      document.getElementById("transID").textContent = data.transactionId || "-";
+      document.getElementById("momoRef").textContent = data.momo_ref || "N/A";
+
+      // Determine type and show/hide bank fields
+      if (data.type === "bank_withdrawal") {
+        document.getElementById("transType").textContent = "Bank Withdrawal";
+        document.getElementById("bankName").textContent = data.bank_name || "-";
+        document.getElementById("accountNumber").textContent = data.account_number || "-";
+        document.getElementById("bankRow").style.display = "flex";
+        document.getElementById("accountRow").style.display = "flex";
+        document.getElementById("networkRow").style.display = "none";
+      } else {
+        document.getElementById("transType").textContent = "MoMo " + (data.type || "");
+        document.getElementById("network").textContent = data.network || "-";
+        document.getElementById("bankRow").style.display = "none";
+        document.getElementById("accountRow").style.display = "none";
+        document.getElementById("networkRow").style.display = "flex";
+      }
+
+      const qrText = `
+My Shop Receipt
+
+Agent: ${data.agent_name}
+Customer: ${data.customer_name}
+Phone: ${data.customer_phone}
+Transaction Type: ${data.type === "bank_withdrawal" ? "Bank Withdrawal" : "MoMo " + data.type}
+Network: ${data.network || 'N/A'}
+Bank: ${data.bank_name || 'N/A'}
+Account Number: ${data.account_number || 'N/A'}
+Amount: GHS ${Number(data.amount).toFixed(2)}
+Reference: ${data.reference}
+Date: ${new Date(data.date).toLocaleString()}
+Transaction ID: ${data.transactionId}
+MoMo Ref: ${data.momo_ref || 'N/A'}
+      `.trim();
+
+      new QRCode(document.getElementById("qrcode"), { text: qrText, width: 160, height: 160 });
+    }
+
+    function printReceipt() { window.print(); }
+    loadReceipt();
+  </script>
+
+</body>
+</html>

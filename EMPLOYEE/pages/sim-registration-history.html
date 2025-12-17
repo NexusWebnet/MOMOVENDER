@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SIM Registration History</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { margin:0; font-family:"Poppins",sans-serif; background:#f8f9fa; min-height:100vh; }
+    .header { background:#00bcd4; color:white; padding:15px; text-align:center; font-size:20px; position:relative; }
+    .header .back { position:absolute; left:15px; top:15px; font-size:24px; cursor:pointer; }
+    .container { padding:20px; max-width:1000px; margin:auto; }
+    .search-bar { width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; font-size:16px; margin-bottom:15px; }
+    
+    .filter-card { background:white; padding:20px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1); margin-bottom:20px; }
+    .date-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px; }
+    .date-row input { flex:1; min-width:200px; padding:10px; border:1px solid #ddd; border-radius:8px; }
+    .apply-btn { background:#ffb300; color:black; border:none; padding:12px 30px; border-radius:50px; font-weight:bold; cursor:pointer; width:100%; font-size:16px; }
+    
+    .export-buttons { display:flex; gap:10px; margin:20px 0; }
+    .export-btn { flex:1; padding:12px; border:none; border-radius:10px; color:white; font-weight:bold; cursor:pointer; }
+    .pdf-btn { background:#e91e63; }
+    .excel-btn { background:#1e88e5; }
+
+    table { width:100%; border-collapse:collapse; background:white; border-radius:15px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+    th { background:#00bcd4; color:white; padding:15px; text-align:left; }
+    td { padding:15px; border-bottom:1px solid #eee; }
+    .amount { font-weight:bold; color:#00695c; }
+    .network { padding:6px 12px; border-radius:20px; font-size:12px; font-weight:bold; color:white; }
+    .mtn { background:#f9a825; }
+    .vodafone { background:#e20074; }
+    .airteltigo { background:#d32f2f; }
+    .glo { background:#4caf50; }
+    .no-data { text-align:center; padding:40px; color:#777; font-size:18px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="back" onclick="navigate('index')"><i class="fas fa-arrow-left"></i></div>
+    SIM Registration History
+  </div>
+
+  <div class="container">
+    <input type="text" class="search-bar" id="searchInput" placeholder="Search by name, phone or ID..." />
+
+    <div class="filter-card">
+      <h3 style="margin-top:0; color:#00bcd4;">Filter SIM Registrations</h3>
+      <div class="date-row">
+        <input type="date" id="startDate" />
+        <input type="date" id="endDate" />
+      </div>
+      <button class="apply-btn" onclick="applyFilter()">Apply Filters</button>
+    </div>
+
+    <div class="export-buttons">
+      <button class="export-btn pdf-btn" onclick="exportToPDF()">Download PDF</button>
+      <button class="export-btn excel-btn" onclick="exportToExcel()">Download Excel</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Phone Number</th>
+          <th>Network</th>
+          <th>ID Type</th>
+          <th>ID Number</th>
+          <th>Amount</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="transactionsBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const token = localStorage.getItem('token');
+    window.navigate = (page) => location.href = page + '.html';
+
+    let allRegistrations = [];
+
+    async function loadRegistrations() {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 30);
+
+      document.getElementById('startDate').value = start.toISOString().split('T')[0];
+      document.getElementById('endDate').value = end.toISOString().split('T')[0];
+
+      await fetchRegistrations(start, end);
+    }
+
+    async function fetchRegistrations(startDate, endDate) {
+      try {
+        const res = await fetch(`http://localhost:8000/api/transactions/sim?start=${startDate.toISOString().split('T')[0]}&end=${endDate.toISOString().split('T')[0]}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error("Failed");
+
+        const data = await res.json();
+        allRegistrations = data.success ? data.registrations : [];
+        renderTable(allRegistrations);
+      } catch (err) {
+        document.getElementById('transactionsBody').innerHTML = `<tr><td colspan="7" class="no-data">Error loading SIM registrations</td></tr>`;
+      }
+    }
+
+    function renderTable(registrations) {
+      const tbody = document.getElementById('transactionsBody');
+      if (!registrations.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="no-data">No SIM registrations found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = registrations.map(r => `
+        <tr>
+          <td>${r.customer_name}</td>
+          <td>${r.customer_phone}</td>
+          <td><span class="network ${r.network?.toLowerCase()}">${r.network || '—'}</span></td>
+          <td>${r.id_type}</td>
+          <td>${r.id_number}</td>
+          <td class="amount">GHS ${Number(r.amount || 5).toFixed(2)}</td>
+          <td>${new Date(r.created_at).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    window.applyFilter = async () => {
+      const start = document.getElementById('startDate').value;
+      const end = document.getElementById('endDate').value;
+      if (!start || !end) return alert("Please select both dates");
+      await fetchRegistrations(new Date(start), new Date(end));
+    };
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      const filtered = allRegistrations.filter(r => 
+        r.customer_name?.toLowerCase().includes(term) || 
+        r.customer_phone?.includes(term) ||
+        r.id_number?.includes(term)
+      );
+      renderTable(filtered);
+    });
+
+    window.exportToPDF = async () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text("SIM Registration Report", 14, 20);
+      doc.setFontSize(12);
+      doc.text(`Agent: ${user.first_name} ${user.last_name}`, 14, 30);
+
+      let y = 50;
+      allRegistrations.forEach(r => {
+        doc.text(`${new Date(r.created_at).toLocaleDateString()} | ${r.customer_name} | ${r.customer_phone} | ${r.network} | GHS ${r.amount || 5}`, 14, y);
+        y += 10;
+        if (y > 270) { doc.addPage(); y = 20; }
+      });
+      doc.save("sim_registrations.pdf");
+    };
+
+    window.exportToExcel = () => {
+      const data = allRegistrations.map(r => ({
+        Date: new Date(r.created_at).toLocaleDateString(),
+        Customer: r.customer_name,
+        "Phone Number": r.customer_phone,
+        Network: r.network,
+        "ID Type": r.id_type,
+        "ID Number": r.id_number,
+        Amount: r.amount || 5,
+        Reference: r.reference_note || ""
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "SIM Registrations");
+      XLSX.writeFile(wb, "sim_registrations.xlsx");
+    };
+
+    window.addEventListener('DOMContentLoaded', loadRegistrations);
+  </script>
+</body>
+</html>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Float Control • My MoMo Shop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: 'Segoe UI', sans-serif; }
+    .glass { backdrop-filter: blur(16px) saturate(180%); background-color: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2); }
+    .sidebar { transition: transform 0.3s ease-in-out; }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+    }
+    #toast { display: none; }
+    #toast.show { display: block; animation: slideIn 0.5s, slideOut 0.5s 3.5s forwards; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes slideOut { to { transform: translateX(100%); opacity: 0; } }
+    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
+    @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    @media (max-width: 640px) {
+      .mobile-table th, .mobile-table td { font-size: 0.875rem; padding: 0.75rem 0.5rem; }
+    }
+  </style>
+</head>
+<body class="text-white min-h-screen">
+
+  <!-- Mobile Menu Button -->
+  <button id="menu-btn" class="md:hidden fixed top-6 left-6 z-50 bg-white/20 p-4 rounded-2xl backdrop-blur-lg shadow-xl">
+    <i class="fas fa-bars text-2xl"></i>
+  </button>
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar fixed md:static inset-y-0 left-0 z-40 w-80 glass shadow-2xl flex flex-col">
+      <div class="p-8 text-center border-b border-white/20">
+        <div class="w-28 h-28 bg-white/20 rounded-full mx-auto mb-4 flex items-center justify-center text-5xl font-bold">A</div>
+        <h2 class="text-3xl font-bold">Welcome Admin</h2>
+        <p class="text-purple-200 mt-2">Queen of the Shop</p>
+      </div>
+      <nav class="flex-1 p-6">
+        <ul class="space-y-4">
+          <li><a href="admin.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-tachometer-alt text-xl"></i><span class="text-xl font-medium">Overview</span></a></li>
+          <li><a href="admin-agents.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-users text-xl"></i><span class="text-xl font-medium">Manage Agents</span></a></li>
+          <li><a href="admin-float.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl bg-white/20 shadow-lg"><i class="fas fa-wallet text-xl"></i><span class="text-xl font-medium">Float Control</span></a></li>
+          <li><a href="admin-payroll.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-money-bill-wave text-xl"></i><span class="text-xl font-medium">Pay Salaries</span></a></li>
+          <li><a href="admin-reports.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-chart-bar text-xl"></i><span class="text-xl font-medium">Reports</span></a></li>
+        </ul>
+      </nav>
+      <div class="p-6 border-t border-white/20 text-center"><p class="text-sm opacity-80">© 2025 My MoMo Empire</p></div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-4 sm:p-8 md:p-12">
+      <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <h1 class="text-4xl sm:text-5xl font-bold">Float Control</h1>
+          <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <button onclick="openTopUpModal()" class="bg-green-600 hover:bg-green-700 px-6 py-4 rounded-2xl font-bold w-full sm:w-auto"><i class="fas fa-plus mr-2"></i>Top-Up Float</button>
+            <button onclick="openDeductModal()" class="bg-red-600 hover:bg-red-700 px-6 py-4 rounded-2xl font-bold w-full sm:w-auto"><i class="fas fa-minus mr-2"></i>Deduct Float</button>
+          </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Total System Float</h3><p id="stat-total-float" class="text-4xl font-bold mt-2 text-yellow-400">-</p></div>
+          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Active Agents</h3><p id="stat-active" class="text-4xl font-bold mt-2 text-green-400">-</p></div>
+          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Low Float (< GHS 2k)</h3><p id="stat-low" class="text-4xl font-bold mt-2 text-orange-400">-</p></div>
+          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Critical (< GHS 1k)</h3><p id="stat-critical" class="text-4xl font-bold mt-2 text-red-400">-</p></div>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="glass p-6 rounded-3xl mb-8">
+          <div class="flex flex-col gap-4">
+            <input type="text" id="search-float" placeholder="Search by name, phone or branch..." class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300">
+            <div class="flex flex-col sm:flex-row gap-4">
+              <select id="branch-filter" class="px-6 py-4 rounded-2xl bg-white/10 text-white w-full sm:w-auto">
+                <option value="">All Branches</option>
+              </select>
+              <button onclick="loadFloats(true)" class="bg-white/20 hover:bg-white/30 px-8 py-4 rounded-2xl w-full sm:w-auto"><i class="fas fa-search mr-2"></i>Filter</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Float Table -->
+        <div class="glass rounded-3xl overflow-hidden shadow-2xl">
+          <div class="overflow-x-auto">
+            <table class="w-full mobile-table">
+              <thead class="bg-white/10">
+                <tr>
+                  <th class="p-6 text-left"><input type="checkbox" id="select-all"></th>
+                  <th class="p-6 text-left text-xl font-bold">Staff Name</th>
+                  <th class="p-6 text-left text-xl font-bold">Role</th>
+                  <th class="p-6 text-left text-xl font-bold">Branch</th>
+                  <th class="p-6 text-left text-xl font-bold cursor-pointer" onclick="sortFloat('balance')">Current Float <i class="fas fa-sort ml-2"></i></th>
+                  <th class="p-6 text-left text-xl font-bold cursor-pointer" onclick="sortFloat('volume')">Today's Volume <i class="fas fa-sort ml-2"></i></th>
+                  <th class="p-6 text-left text-xl font-bold">Status</th>
+                  <th class="p-6 text-left text-xl font-bold">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="float-table">
+                <tr><td colspan="8" class="p-12 text-center"><div class="skeleton h-20 w-full rounded"></div></td></tr>
+              </tbody>
+            </table>
+            <div class="p-6 text-center">
+              <button id="load-more" onclick="loadFloats()" class="bg-white/20 hover:bg-white/30 px-8 py-4 rounded-2xl hidden">Load More</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 max-w-sm w-full">
+    <div class="bg-white text-gray-800 px-8 py-5 rounded-2xl shadow-2xl flex items-center gap-4">
+      <i id="toast-icon" class="fas fa-check-circle text-3xl text-green-500"></i>
+      <span id="toast-message" class="font-bold text-xl"></span>
+    </div>
+  </div>
+
+  <!-- Top-Up Modal -->
+  <div id="topup-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+    <div class="glass p-6 sm:p-10 rounded-3xl max-w-md w-full">
+      <h2 class="text-3xl font-bold text-center mb-8">Top-Up Float</h2>
+      <form id="topup-form">
+        <div class="space-y-6">
+          <div id="selected-agents" class="text-sm opacity-80 mb-4">Selected: <span id="agent-count">0</span> agent(s)</div>
+          <input type="number" id="topup-amount" placeholder="Amount (GHS)" min="1" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300" required>
+          <textarea id="topup-note" placeholder="Note (optional)" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300" rows="3"></textarea>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-6 mt-10">
+          <button type="submit" class="flex-1 bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700">Top-Up</button>
+          <button type="button" onclick="closeTopUp()" class="flex-1 bg-gray-500 text-white py-4 rounded-2xl">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Deduct Modal -->
+  <div id="deduct-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+    <div class="glass p-6 sm:p-10 rounded-3xl max-w-md w-full">
+      <h2 class="text-3xl font-bold text-center mb-8">Deduct Float</h2>
+      <form id="deduct-form">
+        <div class="space-y-6">
+          <div id="selected-agents-deduct" class="text-sm opacity-80 mb-4">Selected: <span id="agent-count-deduct">0</span> agent(s)</div>
+          <input type="number" id="deduct-amount" placeholder="Amount to deduct (GHS)" min="1" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300" required>
+          <textarea id="deduct-note" placeholder="Reason (required)" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300" rows="3" required></textarea>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-6 mt-10">
+          <button type="submit" class="flex-1 bg-red-600 text-white py-4 rounded-2xl font-bold hover:bg-red-700">Deduct</button>
+          <button type="button" onclick="closeDeduct()" class="flex-1 bg-gray-500 text-white py-4 rounded-2xl">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token') || '';
+    let currentPage = 1;
+    let currentSort = 'balance';
+    let currentOrder = 'desc';
+    let hasMore = true;
+
+    function showToast(message, success = true) {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toast-icon');
+      const msg = document.getElementById('toast-message');
+      msg.textContent = message;
+      icon.className = success ? "fas fa-check-circle text-3xl text-green-500" : "fas fa-exclamation-circle text-3xl text-red-500";
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    async function loadBranches() {
+      try {
+        const res = await fetch(`/api/admin/branches`, { headers: { Authorization: `Bearer ${token}` } });
+        const branches = await res.json();
+        const select = document.getElementById('branch-filter');
+        select.innerHTML = '<option value="">All Branches</option>';
+        branches.forEach(b => {
+          select.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+        });
+      } catch (err) { console.error(err); }
+    }
+
+    async function loadFloats(reset = false) {
+      if (reset) { currentPage = 1; hasMore = true; document.getElementById('float-table').innerHTML = ''; }
+      if (!hasMore && !reset) return;
+
+      const search = document.getElementById('search-float').value;
+      const branch = document.getElementById('branch-filter').value;
+
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: 15,
+        search,
+        branch,
+        sort: currentSort,
+        order: currentOrder
+      });
+
+      try {
+        const res = await fetch(`/api/admin/float?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+
+        if (reset) {
+          document.getElementById('stat-total-float').textContent = `GHS ${Number(data.stats.totalFloat || 0).toLocaleString()}`;
+          document.getElementById('stat-active').textContent = data.stats.active || 0;
+          document.getElementById('stat-low').textContent = data.stats.low || 0;
+          document.getElementById('stat-critical').textContent = data.stats.critical || 0;
+        }
+
+        const tbody = document.getElementById('float-table');
+        if (reset) tbody.innerHTML = '';
+
+        if (data.agents.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="p-12 text-center text-purple-300 text-xl">No agents found</td></tr>';
+          hasMore = false;
+          return;
+        }
+
+        data.agents.forEach(agent => {
+          const low = agent.balance < 2000;
+          const critical = agent.balance < 1000;
+          const statusColor = critical ? 'bg-red-500/20 text-red-300' : low ? 'bg-orange-500/20 text-orange-300' : 'bg-green-500/20 text-green-300';
+
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-white/10';
+          tr.innerHTML = `
+            <td class="p-6"><input type="checkbox" class="float-checkbox" value="${agent.id}"></td>
+            <td class="p-6 font-bold text-xl flex items-center gap-4">
+              <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl">
+                ${agent.first_name[0]}${agent.last_name ? agent.last_name[0] : ''}
+              </div>
+              <div>
+                ${agent.first_name} ${agent.last_name || ''}
+                <span class="block text-sm opacity-80">@${agent.username}</span>
+              </div>
+            </td>
+            <td class="p-6">
+              <span class="px-5 py-2 rounded-full text-sm font-bold ${agent.role === 'manager' ? 'bg-purple-600/30 text-purple-300' : 'bg-blue-600/30 text-blue-300'}">
+                ${agent.role === 'manager' ? 'Manager' : 'Employee'}
+              </span>
+            </td>
+            <td class="p-6">
+              ${agent.branch_name ? `${agent.branch_name}<br><span class="text-sm opacity-70">${agent.branch_location || ''}</span>` : 'No Branch'}
+            </td>
+            <td class="p-6 text-2xl font-bold ${critical ? 'text-red-400' : low ? 'text-orange-400' : 'text-green-400'}">
+              GHS ${Number(agent.balance || 0).toLocaleString()}
+            </td>
+            <td class="p-6 text-blue-400 font-bold">
+              GHS ${Number(agent.today_volume || 0).toLocaleString()}
+            </td>
+            <td class="p-6">
+              <span class="px-6 py-2 rounded-full font-bold ${statusColor}">
+                ${critical ? 'Critical' : low ? 'Low' : 'Healthy'}
+              </span>
+            </td>
+            <td class="p-6">
+              <button onclick="topUpSingle(${agent.id})" class="mr-3 text-green-400 hover:text-green-200 font-bold">Top-Up</button>
+              <button onclick="deductSingle(${agent.id})" class="text-red-400 hover:text-red-200 font-bold">Deduct</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        hasMore = data.agents.length === 15;
+        document.getElementById('load-more').classList.toggle('hidden', !hasMore);
+        currentPage++;
+      } catch (err) {
+        showToast("Failed to load float data", false);
+      }
+    }
+
+    function sortFloat(column) {
+      if (currentSort === column) currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+      else { currentSort = column; currentOrder = 'desc'; }
+      loadFloats(true);
+    }
+
+    // Checkbox & Bulk
+    document.getElementById('select-all').addEventListener('change', e => {
+      document.querySelectorAll('.float-checkbox').forEach(cb => cb.checked = e.target.checked);
+    });
+
+    function getSelected() {
+      return Array.from(document.querySelectorAll('.float-checkbox:checked')).map(cb => cb.value);
+    }
+
+    function openTopUpModal() {
+      const selected = getSelected();
+      if (selected.length === 0) return showToast("Select at least one agent", false);
+      document.getElementById('agent-count').textContent = selected.length;
+      document.getElementById('topup-modal').classList.remove('hidden');
+    }
+
+    function openDeductModal() {
+      const selected = getSelected();
+      if (selected.length === 0) return showToast("Select at least one agent", false);
+      document.getElementById('agent-count-deduct').textContent = selected.length;
+      document.getElementById('deduct-modal').classList.remove('hidden');
+    }
+
+    function closeTopUp() { document.getElementById('topup-modal').classList.add('hidden'); }
+    function closeDeduct() { document.getElementById('deduct-modal').classList.add('hidden'); }
+
+    // Single actions
+    function topUpSingle(id) {
+      document.querySelectorAll('.float-checkbox').forEach(cb => cb.checked = cb.value == id);
+      openTopUpModal();
+    }
+
+    function deductSingle(id) {
+      document.querySelectorAll('.float-checkbox').forEach(cb => cb.checked = cb.value == id);
+      openDeductModal();
+    }
+
+    // Form submits (you'll connect these to backend)
+    document.getElementById('topup-form').onsubmit = async e => {
+      e.preventDefault();
+      const amount = document.getElementById('topup-amount').value;
+      const note = document.getElementById('topup-note').value;
+      const agents = getSelected();
+
+      // Send to backend /api/admin/float/topup
+      showToast(`Topped up GHS ${amount} for ${agents.length} agent(s)`);
+      closeTopUp();
+      loadFloats(true);
+    };
+
+    document.getElementById('deduct-form').onsubmit = async e => {
+      e.preventDefault();
+      const amount = document.getElementById('deduct-amount').value;
+      const note = document.getElementById('deduct-note').value;
+      const agents = getSelected();
+
+      showToast(`Deducted GHS ${amount} from ${agents.length} agent(s)`);
+      closeDeduct();
+      loadFloats(true);
+    };
+
+    // Filters
+    document.getElementById('search-float').addEventListener('keyup', () => loadFloats(true));
+    document.getElementById('branch-filter').addEventListener('change', () => loadFloats(true));
+
+    // Mobile menu
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+
+    // Init
+    loadBranches();
+    loadFloats(true);
+  </script>
+</body>
+</html>

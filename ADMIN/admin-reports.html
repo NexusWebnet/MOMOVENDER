@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reports • My MoMo Shop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- SOCKET.IO CLIENT - Fixes "io is not defined" -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <style>
+    body { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .glass { 
+      backdrop-filter: blur(16px) saturate(180%); 
+      background-color: rgba(255, 255, 255, 0.12); 
+      border: 1px solid rgba(255, 255, 255, 0.2); 
+    }
+    .sidebar { 
+      transition: transform 0.3s ease-in-out; 
+    }
+    @media (max-width: 768px) {
+      .sidebar { 
+        transform: translateX(-100%); 
+      }
+      .sidebar.open { 
+        transform: translateX(0); 
+      }
+    }
+    @media print { .no-print { display: none !important; } }
+  </style>
+</head>
+<body class="text-white min-h-screen">
+
+  <!-- Mobile Menu Button -->
+  <button id="menu-btn" class="md:hidden fixed top-6 left-6 z-50 bg-white/20 p-4 rounded-2xl backdrop-blur-lg shadow-xl">
+    <i class="fas fa-bars text-2xl"></i>
+  </button>
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar fixed md:static inset-y-0 left-0 z-40 w-80 glass shadow-2xl flex flex-col">
+      <div class="p-8 text-center border-b border-white/20">
+        <div class="w-28 h-28 bg-white/20 rounded-full mx-auto mb-4 flex items-center justify-center text-5xl font-bold">
+          A
+        </div>
+        <h2 class="text-3xl font-bold">Welcome Admin</h2>
+        <p class="text-purple-200 mt-2">Queen of the Shop 👑</p>
+      </div>
+
+      <nav class="flex-1 p-6">
+        <ul class="space-y-4">
+          <li><a href="admin.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-tachometer-alt text-xl"></i><span class="text-xl font-medium">Overview</span></a></li>
+          <li><a href="admin-agents.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-users text-xl"></i><span class="text-xl font-medium">Manage Agents</span></a></li>
+          <li><a href="admin-float.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-wallet text-xl"></i><span class="text-xl font-medium">Float Control</span></a></li>
+          <li><a href="admin-payroll.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-money-bill-wave text-xl"></i><span class="text-xl font-medium">Pay Salaries</span></a></li>
+          <li><a href="admin-reports.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl bg-white/20 shadow-lg"><i class="fas fa-chart-bar text-xl"></i><span class="text-xl font-medium">Reports</span></a></li>
+        </ul>
+      </nav>
+
+      <div class="p-6 border-t border-white/20 text-center">
+        <p class="text-sm opacity-80">© 2025 My MoMo Empire</p>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-8 md:p-12">
+      <div class="max-w-7xl mx-auto">
+
+        <!-- Header with Controls -->
+        <div class="glass p-8 rounded-3xl mb-8">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <h1 class="text-5xl font-bold">Reports</h1>
+            <div class="flex flex-wrap gap-4 items-center">
+              <!-- Branch Selector -->
+              <select id="branch-select" class="px-6 py-4 rounded-2xl bg-white/10 text-white">
+                <option value="all">All Branches</option>
+              </select>
+
+              <!-- Period Selector -->
+              <select id="report-period" class="px-6 py-4 rounded-2xl bg-white/10 text-white">
+                <option value="month">This Month</option>
+                <option value="lastmonth">Last Month</option>
+                <option value="year">This Year</option>
+                <option value="custom">Custom Range</option>
+              </select>
+
+              <!-- Custom Dates -->
+              <input type="date" id="start-date" class="px-6 py-4 rounded-2xl bg-white/10 text-white hidden">
+              <input type="date" id="end-date" class="px-6 py-4 rounded-2xl bg-white/10 text-white hidden">
+
+              <button onclick="loadReport()" class="bg-white/20 px-8 py-4 rounded-2xl hover:bg-white/30 transition">
+                <i class="fas fa-sync mr-2"></i> Generate
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary KPIs -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+          <div class="glass p-8 rounded-3xl text-center shadow-2xl">
+            <p class="text-purple-200 text-xl mb-4">Total Sales</p>
+            <p id="total-sales" class="text-5xl font-bold">GHS 0.00</p>
+          </div>
+          <div class="glass p-8 rounded-3xl text-center shadow-2xl">
+            <p class="text-purple-200 text-xl mb-4">Total Transactions</p>
+            <p id="total-txns" class="text-5xl font-bold">0</p>
+          </div>
+          <div class="glass p-8 rounded-3xl text-center shadow-2xl">
+            <p class="text-purple-200 text-xl mb-4">Total Commission</p>
+            <p id="total-commission" class="text-5xl font-bold text-yellow-300">GHS 0.00</p>
+          </div>
+          <div class="glass p-8 rounded-3xl text-center shadow-2xl">
+            <p class="text-purple-200 text-xl mb-4">Float Change</p>
+            <p id="float-change" class="text-5xl font-bold text-green-300">+GHS 0.00</p>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid md:grid-cols-2 gap-8 mb-12">
+          <div class="glass p-8 rounded-3xl">
+            <h3 class="text-3xl font-bold mb-6 text-center">Daily Sales Trend</h3>
+            <canvas id="daily-chart"></canvas>
+          </div>
+          <div class="glass p-8 rounded-3xl">
+            <h3 class="text-3xl font-bold mb-6 text-center">Top Agents</h3>
+            <canvas id="top-agents-chart"></canvas>
+          </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="glass rounded-3xl overflow-hidden shadow-2xl mb-8">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-white/10">
+                <tr>
+                  <th class="p-6 text-left text-xl font-bold">Date</th>
+                  <th class="p-6 text-left text-xl font-bold">Agent</th>
+                  <th class="p-6 text-left text-xl font-bold">Type</th>
+                  <th class="p-6 text-left text-xl font-bold">Amount</th>
+                  <th class="p-6 text-left text-xl font-bold">Service</th>
+                </tr>
+              </thead>
+              <tbody id="transactions-table">
+                <tr><td colspan="5" class="p-12 text-center text-purple-300 text-xl">Loading transactions...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Agent Performance Table -->
+        <div class="glass rounded-3xl overflow-hidden shadow-2xl mb-12">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-white/10">
+                <tr>
+                  <th class="p-6 text-left text-xl font-bold">Rank</th>
+                  <th class="p-6 text-left text-xl font-bold">Agent</th>
+                  <th class="p-6 text-left text-xl font-bold">Sales</th>
+                  <th class="p-6 text-left text-xl font-bold">Commission</th>
+                </tr>
+              </thead>
+              <tbody id="agents-table">
+                <tr><td colspan="4" class="p-12 text-center text-purple-300 text-xl">Loading agents...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Export Buttons -->
+        <div class="no-print flex flex-wrap gap-6 mt-12 justify-center">
+          <button onclick="exportExcel()" class="bg-green-600 text-white px-12 py-6 rounded-3xl text-2xl font-bold hover:bg-green-700 shadow-xl">
+            <i class="fas fa-file-excel mr-3"></i> Export Excel
+          </button>
+          <button onclick="downloadPDF()" class="bg-blue-600 text-white px-12 py-6 rounded-3xl text-2xl font-bold hover:bg-blue-700 shadow-xl">
+            <i class="fas fa-download mr-3"></i> Download PDF
+          </button>
+          <button onclick="window.print()" class="bg-gray-700 text-white px-12 py-6 rounded-3xl text-2xl font-bold hover:bg-gray-800 shadow-xl">
+            <i class="fas fa-print mr-3"></i> Print
+          </button>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token') || '';
+    let reportData = null;
+    let dailyChart, topAgentsChart;
+    let currentBranch = 'all';
+
+    // Period change → show/hide custom dates
+    document.getElementById('report-period').addEventListener('change', function() {
+      const isCustom = this.value === 'custom';
+      document.getElementById('start-date').classList.toggle('hidden', !isCustom);
+      document.getElementById('end-date').classList.toggle('hidden', !isCustom);
+    });
+
+    // Branch change
+    document.getElementById('branch-select').addEventListener('change', (e) => {
+      currentBranch = e.target.value;
+      loadReport();
+    });
+
+    async function loadReport() {
+      let url = `/api/reports?type=${document.getElementById('report-period').value}&branch_id=${currentBranch}`;
+      if (document.getElementById('report-period').value === 'custom') {
+        const start = document.getElementById('start-date').value;
+        const end = document.getElementById('end-date').value;
+        if (!start || !end) return alert('Please select both start and end dates');
+        url += `&start=${start}&end=${end}`;
+      }
+
+      try {
+        const res = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to load report');
+        reportData = await res.json();
+
+        // Update branch dropdown
+        const branchSelect = document.getElementById('branch-select');
+        branchSelect.innerHTML = '<option value="all">All Branches</option>';
+        reportData.branches.forEach(b => {
+          const opt = document.createElement('option');
+          opt.value = b.id;
+          opt.textContent = b.name;
+          if (b.id == reportData.branch_id) opt.selected = true;
+          branchSelect.appendChild(opt);
+        });
+
+        // KPIs
+        const s = reportData.summary;
+        document.getElementById('total-sales').textContent = 'GHS ' + Number(s.total_volume).toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('total-txns').textContent = s.total_transactions;
+        document.getElementById('total-commission').textContent = 'GHS ' + Number(s.total_commission).toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('float-change').textContent = 
+          (s.float_change >= 0 ? '+' : '-') + 'GHS ' + Number(Math.abs(s.float_change)).toLocaleString(undefined, {minimumFractionDigits: 2});
+
+        // Transactions table
+        const txBody = document.getElementById('transactions-table');
+        txBody.innerHTML = '';
+        reportData.transactions.forEach(tx => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-white/10 border-b border-white/5';
+          tr.innerHTML = `
+            <td class="p-6">${new Date(tx.date).toLocaleDateString()}</td>
+            <td class="p-6 font-bold">${tx.agent_name || 'Unknown'}</td>
+            <td class="p-6">${tx.type}</td>
+            <td class="p-6 text-green-400 font-bold">GHS ${Number(tx.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td class="p-6">${tx.service}</td>`;
+          txBody.appendChild(tr);
+        });
+
+        // Agents table
+        const agentBody = document.getElementById('agents-table');
+        agentBody.innerHTML = '';
+        reportData.agents.forEach((a, i) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-white/10 border-b border-white/5';
+          tr.innerHTML = `
+            <td class="p-6 font-bold text-purple-300">#${i+1}</td>
+            <td class="p-6 font-bold">${a.name}</td>
+            <td class="p-6 text-blue-400 font-bold">GHS ${Number(a.sales).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td class="p-6 text-yellow-400 font-bold">GHS ${Number(a.commission).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>`;
+          agentBody.appendChild(tr);
+        });
+
+        // Charts
+        if (dailyChart) dailyChart.destroy();
+        dailyChart = new Chart(document.getElementById('daily-chart'), {
+          type: 'line',
+          data: {
+            labels: reportData.daily_trend.map(d => d.date),
+            datasets: [{
+              label: 'Daily Sales (GHS)',
+              data: reportData.daily_trend.map(d => d.total),
+              borderColor: '#fb923c',
+              backgroundColor: 'rgba(251,146,60,0.2)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+
+        if (topAgentsChart) topAgentsChart.destroy();
+        topAgentsChart = new Chart(document.getElementById('top-agents-chart'), {
+          type: 'bar',
+          data: {
+            labels: reportData.top_agents.map(a => a.name.split(' ')[0]),
+            datasets: [{
+              label: 'Sales (GHS)',
+              data: reportData.top_agents.map(a => a.sales),
+              backgroundColor: '#a855f7'
+            }]
+          },
+          options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+
+      } catch (err) {
+        alert('Error loading report: ' + err.message);
+      }
+    }
+
+    function exportExcel() {
+      if (!reportData) return alert('No data to export');
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(reportData.transactions), 'Transactions');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(reportData.agents), 'Agent Performance');
+      XLSX.writeFile(wb, `MoMo_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const element = document.querySelector('main > div');
+      const canvas = await html2canvas(element, { scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 210;
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      doc.save(`MoMo_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+    }
+
+    // Mobile menu
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+
+    // REAL-TIME UPDATES
+    const socket = io();
+    socket.on('reportUpdate', () => {
+      console.log('New transaction → refreshing report');
+      loadReport();
+    });
+
+    // Initial load
+    loadReport();
+    setInterval(loadReport, 120000); // Fallback refresh every 2 minutes
+  </script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Branch Report - Filter & Export</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    @media print { .no-print { display: none !important; } }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <div class="max-w-7xl mx-auto p-6">
+
+    <!-- Report Controls -->
+    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 no-print">
+      <h1 class="text-4xl font-bold text-orange-700 mb-6">Branch Performance Report</h1>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div>
+          <label class="block font-bold mb-2">Report Type</label>
+          <select id="report-type" class="w-full px-4 py-3 border rounded-xl">
+            <option value="month">This Month</option>
+            <option value="lastmonth">Last Month</option>
+            <option value="year">This Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+
+        <div id="custom-dates" class="hidden space-y-3">
+          <input type="date" id="start-date" class="w-full px-4 py-3 border rounded-xl">
+          <input type="date" id="end-date" class="w-full px-4 py-3 border rounded-xl">
+        </div>
+
+        <div class="md:col-span-2 flex items-end gap-4">
+          <button onclick="loadReport()" class="bg-orange-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-orange-700">
+            <i class="fas fa-sync mr-2"></i> Generate Report
+          </button>
+          <button onclick="exportExcel()" class="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700">
+            <i class="fas fa-file-excel mr-2"></i> Export Excel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Content -->
+    <div id="report-content" class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-orange-600 to-orange-700 text-white p-12 text-center">
+        <img src="https://i.imgur.com/7r5G8iJ.png" alt="Logo" class="h-24 mx-auto mb-6">
+        <h1 class="text-5xl font-bold">BRANCH PERFORMANCE REPORT</h1>
+        <p class="text-3xl mt-6" id="report-title">November 2025</p>
+        <p class="text-xl mt-4">Branch: <span id="branch-name" class="font-bold">Loading...</span></p>
+        <p>Manager: <span id="manager-name">Loading...</span> | Generated: <span id="gen-date"></span></p>
+      </div>
+
+      <div class="p-10">
+
+        <!-- KPIs -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+          <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-8 rounded-2xl text-center shadow-lg">
+            <p class="text-xl">Total Volume</p>
+            <p id="rep-total-vol" class="text-5xl font-bold mt-4">GHS 0</p>
+          </div>
+          <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-8 rounded-2xl text-center shadow-lg">
+            <p class="text-xl">Transactions</p>
+            <p id="rep-total-txn" class="text-5xl font-bold mt-4">0</p>
+          </div>
+          <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-8 rounded-2xl text-center shadow-lg">
+            <p class="text-xl">Commission</p>
+            <p id="rep-commission" class="text-5xl font-bold mt-4">GHS 0</p>
+          </div>
+          <div class="bg-gradient-to-br from-yellow-500 to-orange-500 text-white p-8 rounded-2xl text-center shadow-lg">
+            <p class="text-xl">Active Agents</p>
+            <p id="active-agents-count" class="text-5xl font-bold mt-4">0</p>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid md:grid-cols-2 gap-8 mb-12">
+          <div class="bg-gray-50 p-8 rounded-2xl">
+            <h3 class="text-2xl font-bold mb-6 text-center">Daily Volume Trend</h3>
+            <canvas id="dailyChart"></canvas>
+          </div>
+          <div class="bg-gray-50 p-8 rounded-2xl">
+            <h3 class="text-2xl font-bold mb-6 text-center">Top Performing Agents</h3>
+            <canvas id="topAgentsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Agent Table -->
+        <h3 class="text-3xl font-bold mb-6 text-orange-700">Agent Leaderboard</h3>
+        <table class="w-full border-2 border-gray-300 mb-12">
+          <thead class="bg-orange-600 text-white">
+            <tr>
+              <th class="p-4">#</th>
+              <th class="p-4 text-left">Agent Name</th>
+              <th class="p-4 text-right">Txns</th>
+              <th class="p-4 text-right">Volume</th>
+              <th class="p-4 text-right">Commission</th>
+            </tr>
+          </thead>
+          <tbody id="agent-table" class="text-center">
+            <tr><td colspan="5" class="p-12 text-gray-500">Loading data...</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Float Summary -->
+        <div class="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-10 rounded-2xl text-center mb-12">
+          <h3 class="text-3xl font-bold mb-6">Float Balance Summary</h3>
+          <div class="grid grid-cols-3 gap-8">
+            <div>
+              <p class="text-xl opacity-90">Starting Balance</p>
+              <p id="float-start" class="text-5xl font-bold">GHS 0</p>
+            </div>
+            <div>
+              <p class="text-xl opacity-90">Total Loaded</p>
+              <p id="float-loaded" class="text-5xl font-bold">GHS 0</p>
+            </div>
+            <div>
+              <p class="text-xl opacity-90">Current Balance</p>
+              <p id="float-current" class="text-5xl font-bold">GHS 0</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comments -->
+        <h3 class="text-3xl font-bold mb-6">Manager's Comments</h3>
+        <textarea id="comments" class="w-full p-6 border-2 rounded-xl h-48 text-lg" placeholder="Write your summary, achievements, challenges, requests for next month..."></textarea>
+
+        <!-- Buttons -->
+        <div class="no-print flex flex-wrap gap-6 mt-12 justify-center">
+          <button onclick="sendToAdmin()" class="bg-green-600 text-white px-12 py-6 rounded-2xl text-2xl font-bold hover:bg-green-700 shadow-2xl">
+            <i class="fas fa-paper-plane mr-4"></i> SEND TO HEAD OFFICE
+          </button>
+          <button onclick="downloadPDF()" class="bg-blue-600 text-white px-12 py-6 rounded-2xl text-2xl font-bold hover:bg-blue-700 shadow-2xl">
+            <i class="fas fa-download mr-4"></i> DOWNLOAD PDF
+          </button>
+          <button onclick="window.print()" class="bg-gray-700 text-white px-12 py-6 rounded-2xl text-2xl font-bold hover:bg-gray-800 shadow-2xl">
+            <i class="fas fa-print mr-4"></i> PRINT
+          </button>
+        </div>
+
+        <!-- Signature -->
+        <div class="mt-20 text-center border-t-2 pt-10">
+          <p class="text-xl mb-10">Report Approved By:</p>
+          <div class="border-b-4 border-orange-600 w-96 mx-auto mb-4"></div>
+          <p class="font-bold text-2xl" id="manager-name-bottom">Manager Name</p>
+          <p class="text-gray-600">Date: <span id="sign-date"></span></p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    let reportData = null;
+    let dailyChart, topAgentsChart;
+
+    // Show/hide custom dates
+    document.getElementById('report-type').addEventListener('change', function() {
+      document.getElementById('custom-dates').classList.toggle('hidden', this.value !== 'custom');
+    });
+
+    async function loadReport() {
+      const type = document.getElementById('report-type').value;
+      let url = '/api/manager/reports/data?type=' + type;
+
+      if (type === 'custom') {
+        const start = document.getElementById('start-date').value;
+        const end = document.getElementById('end-date').value;
+        if (!start || !end) return alert('Please select date range');
+        url += `&start=${start}&end=${end}`;
+      }
+
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      reportData = await res.json();
+
+      // Update title
+      document.getElementById('report-title').textContent = reportData.period;
+      document.getElementById('branch-name').textContent = reportData.branch.name;
+      document.getElementById('manager-name').textContent = reportData.manager_name;
+      document.getElementById('manager-name-bottom').textContent = reportData.manager_name;
+      document.getElementById('gen-date').textContent = new Date().toLocaleDateString('en-GB');
+      document.getElementById('sign-date').textContent = new Date().toLocaleDateString('en-GB');
+
+      // KPIs
+      const s = reportData.summary;
+      document.getElementById('rep-total-vol').textContent = 'GHS ' + Number(s.total_volume).toLocaleString();
+      document.getElementById('rep-total-txn').textContent = s.total_txns.toLocaleString();
+      document.getElementById('rep-commission').textContent = 'GHS ' + Number(s.total_commission).toLocaleString();
+      document.getElementById('active-agents-count').textContent = s.active_agents;
+
+      // Agent table
+      const tbody = document.getElementById('agent-table');
+      tbody.innerHTML = '';
+      reportData.agents.forEach((a, i) => {
+        const tr = document.createElement('tr');
+        tr.className = i % 2 === 0 ? 'bg-gray-50' : '';
+        tr.innerHTML = `
+          <td class="p-4 font-bold">${i+1}</td>
+          <td class="p-4 text-left">${a.name}</td>
+          <td class="p-4 text-right">${a.txns.toLocaleString()}</td>
+          <td class="p-4 text-right font-bold text-green-600">GHS ${Number(a.volume).toLocaleString()}</td>
+          <td class="p-4 text-right font-bold text-purple-600">GHS ${Number(a.commission).toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Float
+      document.getElementById('float-start').textContent = 'GHS ' + Number(reportData.float.start).toLocaleString();
+      document.getElementById('float-loaded').textContent = 'GHS ' + Number(reportData.float.loaded).toLocaleString();
+      document.getElementById('float-current').textContent = 'GHS ' + Number(reportData.float.current).toLocaleString();
+
+      // Charts
+      if (dailyChart) dailyChart.destroy();
+      dailyChart = new Chart(document.getElementById('dailyChart'), {
+        type: 'line',
+        data: {
+          labels: reportData.daily.map(d => d.date),
+          datasets: [{
+            label: 'Daily Volume',
+            data: reportData.daily.map(d => d.total),
+            borderColor: '#fb923c',
+            backgroundColor: 'rgba(251,146,60,0.2)',
+            tension: 0.4,
+            fill: true
+          }]
+        }
+      });
+
+      if (topAgentsChart) topAgentsChart.destroy();
+      topAgentsChart = new Chart(document.getElementById('topAgentsChart'), {
+        type: 'bar',
+        data: {
+          labels: reportData.agents.slice(0,5).map(a => a.name.split(' ')[0]),
+          datasets: [{
+            label: 'Volume',
+            data: reportData.agents.slice(0,5).map(a => a.volume),
+            backgroundColor: '#fb923c'
+          }]
+        }
+      });
+    }
+
+    // EXPORT TO EXCEL
+    function exportExcel() {
+      const wb = XLSX.utils.book_new();
+
+      // Summary sheet
+      const summary = [
+        ["Branch Report", ""],
+        ["Period", reportData.period],
+        ["Branch", reportData.branch.name],
+        ["Manager", reportData.manager_name],
+        [],
+        ["Key Metrics", ""],
+        ["Total Volume", reportData.summary.total_volume],
+        ["Total Transactions", reportData.summary.total_txns],
+        ["Average Ticket", reportData.summary.avg_ticket],
+        ["Total Commission", reportData.summary.total_commission],
+        ["Active Agents", reportData.summary.active_agents]
+      ];
+      const ws1 = XLSX.utils.aoa_to_sheet(summary);
+      XLSX.utils.book_append_sheet(wb, ws1, "Summary");
+
+      // Agent performance sheet
+      const agentData = [["Rank", "Agent", "Transactions", "Volume", "Commission"]];
+      reportData.agents.forEach((a, i) => {
+        agentData.push([i+1, a.name, a.txns, a.volume, a.commission]);
+      });
+      const ws2 = XLSX.utils.aoa_to_sheet(agentData);
+      XLSX.utils.book_append_sheet(wb, ws2, "Agent Performance");
+
+      XLSX.writeFile(wb, `Report_${reportData.branch.name.replace(/ /g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    // SEND TO ADMIN
+    async function sendToAdmin() {
+      if (!confirm("Send this report to Head Office?")) return;
+
+      await fetch('/api/manager/reports/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          period: reportData.period,
+          comments: document.getElementById('comments').value || "No comments"
+        })
+      });
+
+      alert("Report sent to Head Office! 📧");
+    }
+
+    // DOWNLOAD PDF (fixed)
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const element = document.getElementById('report-content');
+
+      const canvas = await html2canvas(element, { scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        doc.addPage();
+        doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      doc.save(`Report_${reportData.branch.name.replace(/ /g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`);
+    }
+
+    // Load default (this month)
+    loadReport();
+  </script>
+</body>
+</html>
