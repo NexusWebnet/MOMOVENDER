@@ -1,56 +1,62 @@
-// backend/routes/susuRoute.js
+// backend/routes/susuRoute.js — FINAL VERSION (USING EXISTING 'reference' COLUMN)
+
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
-const { authenticateToken } = require("./auth");
+const jwt = require("jsonwebtoken");
 
-// Helper to generate unique transaction ID
-function generateTxnId() {
-  const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const random = Math.floor(1000 + Math.random() * 9000);
-  return `SUSU${date}${random}`;
-}
+const SECRET = process.env.JWT_SECRET || "fallback_secret";
+
+// Bearer Token Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'No token provided' });
+  }
+
+  jwt.verify(token, SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ success: false, message: 'Invalid or expired token' });
+    }
+    req.user = decoded;
+    next();
+  });
+};
+
+router.use(authenticateToken);
 
 // POST /api/records/log — Log Susu Contribution
-router.post("/log", authenticateToken, (req, res) => {
+router.post("/log", (req, res) => {
   const agentId = req.user.id;
   const agentName = `${req.user.first_name || ''} ${req.user.last_name || ''}`.trim() || 'Agent';
 
   const {
-    type,
     customer_name,
     customer_phone,
     amount,
-    bank_name,        // This is susu_group in DB
-    reference = "Susu Contribution"
+    susu_group,
+    reference = "Susu Contribution"  // ← Uses the existing 'reference' column
   } = req.body;
 
-  // Validate required fields
-  if (!customer_name || !customer_phone || !amount || !bank_name) {
-    return res.json({ 
-      status: false, 
+  // Validation
+  if (!customer_name || !customer_phone || !amount || !susu_group) {
+    return res.status(400).json({ 
+      success: false, 
       message: "Customer name, phone, amount, and group are required" 
     });
   }
 
-  if (type !== "susu") {
-    return res.json({ 
-      status: false, 
-      message: "Invalid transaction type for susu logger" 
-    });
-  }
-
-  // Parse amount safely
   const parsedAmount = parseFloat(amount);
   if (isNaN(parsedAmount) || parsedAmount <= 0) {
-    return res.json({ 
-      status: false, 
-      message: "Invalid amount" 
+    return res.status(400).json({ 
+      success: false, 
+      message: "Amount must be a positive number" 
     });
   }
 
-  const transactionId = generateTxnId();
-  const susuGroup = bank_name.trim();  // Map frontend field to DB column
+  const transactionId = `SUSU_${Date.now()}`;
 
   const sql = `
     INSERT INTO susu_contributions 
@@ -63,7 +69,7 @@ router.post("/log", authenticateToken, (req, res) => {
     customer_name.trim(),
     customer_phone.trim(),
     parsedAmount,
-    susuGroup,
+    susu_group.trim(),
     reference.trim(),
     agentId,
     agentName
@@ -71,10 +77,10 @@ router.post("/log", authenticateToken, (req, res) => {
 
   db.query(sql, values, (err, result) => {
     if (err) {
-      console.error("Susu DB Error:", err);
-      return res.json({ 
-        status: false, 
-        message: err.sqlMessage || "Failed to save contribution" 
+      console.error("Susu Insert Error:", err);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Failed to log contribution" 
       });
     }
 
@@ -83,13 +89,13 @@ router.post("/log", authenticateToken, (req, res) => {
       customer_name: customer_name.trim(),
       customer_phone: customer_phone.trim(),
       amount: parsedAmount,
-      susu_group: susuGroup,
+      susu_group: susu_group.trim(),
       reference: reference.trim(),
       agent_name: agentName,
       created_at: new Date().toISOString()
     };
 
-    // Real-time notification (safe emit)
+    // Real-time emit via Socket.IO
     const io = req.app.get('socketio');
     if (io) {
       io.emit('newTransaction', {
@@ -100,9 +106,8 @@ router.post("/log", authenticateToken, (req, res) => {
       console.log('Emitted new susu contribution');
     }
 
-    // Success response — matches your frontend
     res.json({
-      status: true,
+      success: true,
       transactionId,
       message: "Susu contribution logged successfully"
     });

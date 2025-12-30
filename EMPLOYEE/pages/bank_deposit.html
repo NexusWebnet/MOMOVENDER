@@ -89,95 +89,111 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script type="module">import { apiFetch, logout } from '/js/api.js';</script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
-const user = JSON.parse(localStorage.getItem('user') || '{}');
-const token = localStorage.getItem('token');
-const socket = io('http://localhost:8000');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const token = localStorage.getItem('token');
+  const socket = io('http://localhost:8000');
 
-if (!token) {
-  alert('Please login first');
-  window.location.href = 'login.html';
-}
-
-function navigate(page) { window.location.href = page + '.html'; }
-function closeModal() { document.getElementById('receiptModal').style.display = 'none'; }
-
-function printReceipt() {
-  const content = document.querySelector('#receiptModal .modal-content').innerHTML;
-  const win = window.open('', '', 'height=700,width=500');
-  win.document.write('<html><head><title>Receipt</title></head><body>' + content + '</body></html>');
-  win.document.close();
-  win.print();
-}
-
-function showResult(msg, type = 'success') {
-  const el = document.getElementById('result');
-  el.className = `result ${type}`;
-  el.innerHTML = `<p>${msg}</p>`;
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 4000);
-}
-
-document.getElementById('bankDepositForm').addEventListener('submit', async e => {
-  e.preventDefault();
-
-  const payload = {
-  type: "deposit",
-  customer_name: document.getElementById('customerName').value.trim(),
-  customer_account: document.getElementById('accountNumber').value.trim(),
-  bank_name: document.getElementById('bankName').value,
-  amount: parseFloat(document.getElementById('amount').value),
-  reference: document.getElementById('reference').value.trim() || "Bank Deposit",  // ← MUST BE "reference"
-  agent_name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || "Agent"
-};
-  // Validation
-  if (!payload.customer_name || !payload.customer_account || !payload.bank_name || isNaN(payload.amount) || payload.amount <= 0) {
-    return showResult('Please fill all required fields correctly.', 'error');
+  if (!token) {
+    alert('Please login first');
+    window.location.href = 'login.html';
   }
 
-  try {
-    const res = await fetch('http://localhost:8000/records/log', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
+  function navigate(page) {
+    window.location.href = page + '.html';
+  }
 
-    const data = await res.json();
+  function closeModal() {
+    document.getElementById('receiptModal').style.display = 'none';
+  }
 
-    if (data.success || data.status) {
-      const now = new Date().toLocaleString();
+  function printReceipt() {
+    const content = document.querySelector('#receiptModal .modal-content').innerHTML;
+    const win = window.open('', '', 'height=700,width=500');
+    win.document.write('<html><head><title>Receipt</title></head><body>' + content + '</body></html>');
+    win.document.close();
+    win.print();
+  }
 
-      document.getElementById('rId').textContent = data.transactionId || 'N/A';
-      document.getElementById('rAgent').textContent = payload.agent_name;
-      document.getElementById('rCustomer').textContent = payload.customer_name;
-      document.getElementById('rAccount').textContent = payload.customer_account;
-      document.getElementById('rBank').textContent = payload.bank_name;
-      document.getElementById('rAmount').textContent = payload.amount.toFixed(2);
-      document.getElementById('rRef').textContent = payload.reference;
-      document.getElementById('rDate').textContent = now;
+  function showResult(msg, type = 'success') {
+    const el = document.getElementById('result');
+    el.className = `result ${type}`;
+    el.innerHTML = `<p>${msg}</p>`;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 4000);
+  }
 
-      QRCode.toCanvas(document.getElementById('rQRCode'),
-        `BANK DEPOSIT\nID: ${data.transactionId}\nCustomer: ${payload.customer_name}\nAccount: ${payload.customer_account}\nBank: ${payload.bank_name}\nAmount: GHS ${payload.amount.toFixed(2)}\nDate: ${now}`,
-        { width: 150 }
-      );
+  document.getElementById('bankDepositForm').addEventListener('submit', async e => {
+    e.preventDefault();
 
-      document.getElementById('receiptModal').style.display = 'flex';
-      showResult('Bank deposit logged successfully!', 'success');
-      document.getElementById('bankDepositForm').reset();
+    const payload = {
+      customer_name: document.getElementById('customerName').value.trim(),
+      customer_account: document.getElementById('accountNumber').value.trim(),
+      bank_name: document.getElementById('bankName').value,
+      amount: parseFloat(document.getElementById('amount').value),
+      reference: document.getElementById('reference').value.trim() || "Bank Deposit",
+      agent_name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || "Agent"
+    };
 
-      socket.emit('newTransaction', { type: 'bank_deposit', amount: payload.amount });
-    } else {
-      showResult(data.message || 'Failed to log deposit', 'error');
+    // Validation
+    if (!payload.customer_name || !payload.customer_account || !payload.bank_name || 
+        isNaN(payload.amount) || payload.amount <= 0) {
+      return showResult('Please fill all required fields correctly.', 'error');
     }
-  } catch (err) {
-    console.error(err);
-    showResult('Network error — please try again', 'error');
-  }
-});
+
+    try {
+      const res = await fetch('http://localhost:8000/bank-deposit/log', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        const now = new Date().toLocaleString();
+
+        document.getElementById('rId').textContent = data.transactionId || 'N/A';
+        document.getElementById('rAgent').textContent = payload.agent_name;
+        document.getElementById('rCustomer').textContent = payload.customer_name;
+        document.getElementById('rAccount').textContent = payload.customer_account;
+        document.getElementById('rBank').textContent = payload.bank_name;
+        document.getElementById('rAmount').textContent = payload.amount.toFixed(2);
+        document.getElementById('rRef').textContent = payload.reference;
+        document.getElementById('rDate').textContent = now;
+
+        // Generate QR code
+        QRCode.toCanvas(document.getElementById('rQRCode'),
+          `BANK DEPOSIT\nID: ${data.transactionId}\nCustomer: ${payload.customer_name}\nAccount: ${payload.customer_account}\nBank: ${payload.bank_name}\nAmount: GHS ${payload.amount.toFixed(2)}\nDate: ${now}`,
+          { width: 150 }
+        );
+
+        document.getElementById('receiptModal').style.display = 'flex';
+        showResult('Bank deposit logged successfully!', 'success');
+        document.getElementById('bankDepositForm').reset();
+
+        // Emit real-time event
+        socket.emit('newTransaction', {
+          type: 'bank_deposit',
+          amount: payload.amount,
+          transactionId: data.transactionId
+        });
+      } else {
+        showResult(data.message || 'Failed to log deposit', 'error');
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+      showResult('Network error — please try again', 'error');
+    }
+  });
 </script>
 </body>
 </html>

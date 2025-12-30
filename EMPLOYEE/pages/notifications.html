@@ -19,6 +19,19 @@
     <p class="loading">Loading notifications...</p>
 </div>
 
-<script src="../js/notifications.js"></script>
+<script src="../js/notifications.js">
+    import { io } from "socket.io-client";
+
+const socket = io("http://localhost:5000", { withCredentials: true });
+
+socket.on("connect", () => console.log("Connected:", socket.id));
+
+socket.on("newNotification", (notif) => {
+  console.log("New notification received:", notif);
+  // Update your state to show it in the UI
+});
+
+</script>
+<script type="module">import { apiFetch, logout } from '/js/api.js';</script>
 </body>
 </html>

@@ -22,9 +22,37 @@
     .result.error { border-left:4px solid #dc3545; color:#721c24; }
 
     .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999; }
-    .modal-content { background:#fff; padding:20px; border-radius:15px; width:90%; max-width:400px; box-shadow:0 5px 15px rgba(0,0,0,0.3); }
-    .modal-content h3 { text-align:center; color:#e74c3c; margin-bottom:15px; }
-    #rQRCode { display:block; margin:15px auto; max-width:150px; }
+    .modal-content { 
+      background: url('../../ASSETS/images/logo.jpeg') center/cover no-repeat; 
+      background-color: rgba(255, 255, 255, 0.85); 
+      background-blend-mode: overlay; 
+      position: relative; 
+      padding: 40px 20px; 
+      border-radius: 15px; 
+      width:90%; max-width:400px; 
+      box-shadow:0 5px 15px rgba(0,0,0,0.3); 
+      text-align: center;
+    }
+    .modal-content::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 15px;
+      z-index: -1;
+    }
+    .modal-content::after {
+      content: "";
+      display: block;
+      width: 100px;
+      height: 100px;
+      background: url('../../ASSETS/images/logo.jpeg') center/contain no-repeat;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      border: 4px solid #e74c3c;
+    }
+    .modal-content h3 { color:#e74c3c; margin-bottom:20px; font-weight: bold; }
+    #rQRCode { display:block; margin:20px auto; max-width:150px; }
     .modal-buttons { display:flex; gap:10px; margin-top:20px; }
     .modal-buttons button { flex:1; padding:12px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; }
     .print-btn { background:#28a745; color:#fff; }
@@ -64,8 +92,6 @@
     <label for="reference">Reference (optional)</label>
     <input type="text" id="reference" placeholder="e.g., Cash withdrawal">
 
-    <input type="hidden" name="type" value="withdraw">
-
     <button type="submit">Process Withdrawal</button>
   </form>
 
@@ -93,137 +119,115 @@
   </div>
 </div>
 
+<!-- Scripts at the end of body -->
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script type="module">import { apiFetch, logout } from '/js/api.js';</script>
 <script>
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  window.navigate = (page) => location.href = page + '.html';
-
-  let allTransactions = [];
-
-  async function loadTransactions() {
-    if (!token) {
-      alert("Please login first");
-      window.location.href = '/login.html';
-      return;
-    }
-
-    // Default: Last 7 days
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - 7);
-
-    document.getElementById('startDate').value = start.toISOString().split('T')[0];
-    document.getElementById('endDate').value = end.toISOString().split('T')[0];
-
-    await fetchTransactions(start, end);
+  if (!token) {
+    alert('Please login first');
+    window.location.href = 'login.html';
   }
 
-  async function fetchTransactions(startDate, endDate) {
-    try {
-      const startStr = startDate.toISOString().split('T')[0];
-      const endStr = endDate.toISOString().split('T')[0];
-
-      const res = await fetch(`/api/transactions/bank?start=${startStr}&end=${endStr}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const data = await res.json();
-
-      // SAFE: Handle different response formats
-      allTransactions = (data.data || data.transactions || data || []).filter(t => t.type === 'withdraw');
-      renderTable(allTransactions);
-    } catch (err) {
-      console.error('Load error:', err);
-      document.getElementById('transactionsBody').innerHTML = 
-        `<tr><td colspan="6" class="no-data">Error loading withdrawals. Check connection.</td></tr>`;
-    }
+  function navigate(page) {
+    window.location.href = page + '.html';
   }
 
-  function renderTable(transactions) {
-    const tbody = document.getElementById('transactionsBody');
-
-    // SAFE: Check if transactions is array
-    if (!Array.isArray(transactions) || transactions.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="no-data">No bank withdrawals found</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = transactions.map(t => `
-      <tr>
-        <td>${t.customer_name || 'Unknown'}<br><small>${t.customer_phone || ''}</small></td>
-        <td>${t.bank_name || '—'}</td>
-        <td>${t.customer_account || '—'}</td>
-        <td class="amount">GHS ${parseFloat(t.amount || 0).toFixed(2)}</td>
-        <td><small>${t.reference_note || 'Bank Withdrawal'}</small></td>
-        <td>${new Date(t.created_at).toLocaleDateString()}</td>
-      </tr>
-    `).join('');
+  function closeModal() {
+    document.getElementById('receiptModal').style.display = 'none';
   }
 
-  window.applyFilter = async () => {
-    const start = document.getElementById('startDate').value;
-    const end = document.getElementById('endDate').value;
-    if (!start || !end) return alert("Select both dates");
-    await fetchTransactions(new Date(start), new Date(end));
-  };
+  function printReceipt() {
+    const content = document.querySelector('#receiptModal .modal-content').innerHTML;
+    const win = window.open('', '', 'height=700,width=500');
+    win.document.write('<html><head><title>Receipt</title></head><body>' + content + '</body></html>');
+    win.document.close();
+    win.print();
+  }
 
-  document.getElementById('searchInput').addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    const filtered = allTransactions.filter(t => 
-      (t.customer_name && t.customer_name.toLowerCase().includes(term)) ||
-      (t.customer_phone && t.customer_phone.includes(term)) ||
-      (t.bank_name && t.bank_name.toLowerCase().includes(term)) ||
-      (t.customer_account && t.customer_account.includes(term))
-    );
-    renderTable(filtered);
-  });
+  function showResult(msg, type = 'success') {
+    const el = document.getElementById('result');
+    el.className = `result ${type}`;
+    el.innerHTML = `<p>${msg}</p>`;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 4000);
+  }
 
-  window.exportToPDF = () => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("Bank Withdrawals Report", 14, 20);
-    doc.setFontSize(12);
-    doc.text(`Agent: ${user.first_name || ''} ${user.last_name || ''}`, 14, 30);
-    doc.text(`Period: ${document.getElementById('startDate').value} to ${document.getElementById('endDate').value}`, 14, 38);
+  // Form submission
+  const form = document.getElementById('bankWithdrawalForm');
+  if (form) {
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
 
-    let y = 50;
-    allTransactions.forEach(t => {
-      const line = `${new Date(t.created_at).toLocaleDateString()} | ${t.customer_name || 'Unknown'} | ${t.bank_name || ''} | GHS ${t.amount}`;
-      doc.text(line, 14, y);
-      y += 10;
-      if (y > 270) {
-        doc.addPage();
-        y = 20;
+      const payload = {
+        customer_name: document.getElementById('customerName').value.trim(),
+        customer_phone: document.getElementById('customerPhone').value.trim(),
+        customer_account: document.getElementById('accountNumber').value.trim(),
+        bank_name: document.getElementById('bankName').value,
+        amount: parseFloat(document.getElementById('amount').value),
+        reference: document.getElementById('reference').value.trim() || "Bank Withdrawal"
+      };
+
+      if (!payload.customer_name || !payload.customer_phone || !payload.customer_account ||
+          !payload.bank_name || isNaN(payload.amount) || payload.amount <= 0) {
+        return showResult('Please fill all required fields correctly.', 'error');
+      }
+
+      try {
+        const res = await fetch('http://localhost:8000/bank-withdrawal/log', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          const now = new Date().toLocaleString();
+
+          document.getElementById('rId').textContent = data.transactionId || 'N/A';
+          document.getElementById('rAgent').textContent = `${user.first_name || 'Agent'} ${user.last_name || ''}`.trim();
+          document.getElementById('rCustomer').textContent = payload.customer_name;
+          document.getElementById('rPhone').textContent = payload.customer_phone;
+          document.getElementById('rAccount').textContent = payload.customer_account;
+          document.getElementById('rBank').textContent = payload.bank_name;
+          document.getElementById('rAmount').textContent = payload.amount.toFixed(2);
+          document.getElementById('rRef').textContent = payload.reference;
+          document.getElementById('rDate').textContent = now;
+
+          QRCode.toCanvas(document.getElementById('rQRCode'),
+            `BANK WITHDRAWAL\nID: ${data.transactionId}\nCustomer: ${payload.customer_name}\nPhone: ${payload.customer_phone}\nAccount: ${payload.customer_account}\nBank: ${payload.bank_name}\nAmount: GHS ${payload.amount.toFixed(2)}\nDate: ${now}`,
+            { width: 150 }
+          );
+
+          document.getElementById('receiptModal').style.display = 'flex';
+          showResult('Withdrawal processed successfully!', 'success');
+          form.reset();
+
+          // Optional Socket.io event
+          const socket = io('http://localhost:8000');
+          socket.emit('newTransaction', {
+            type: 'bank_withdrawal',
+            amount: payload.amount,
+            transactionId: data.transactionId
+          });
+        } else {
+          showResult(data.message || 'Failed to process withdrawal', 'error');
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        showResult('Network error — please try again', 'error');
       }
     });
-
-    doc.save("bank_withdrawals.pdf");
-  };
-
-  window.exportToExcel = () => {
-    const data = allTransactions.map(t => ({
-      Date: new Date(t.created_at).toLocaleDateString(),
-      Customer: t.customer_name || 'Unknown',
-      Phone: t.customer_phone || '',
-      Bank: t.bank_name || '',
-      "Account No": t.customer_account || '',
-      Amount: parseFloat(t.amount || 0),
-      Reference: t.reference_note || 'Bank Withdrawal'
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Bank Withdrawals");
-    XLSX.writeFile(wb, "bank_withdrawals.xlsx");
-  };
-
-  window.addEventListener('DOMContentLoaded', loadTransactions);
+  } else {
+    console.error('Form element not found. Check id="bankWithdrawalForm"');
+  }
 </script>
 
 </body>
-</html>
+</html> convert this page to the cookies pages 

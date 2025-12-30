@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Transaction History</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: "Poppins", sans-serif;
+      background: url('../../ASSETS/images/logo.jpeg') center/cover no-repeat fixed;
+      min-height: 100vh;
+      position: relative;
+      color: #fff;
+    }
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(80, 40, 140, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: -1;
+    }
+
+    /* Sidebar - Exact style from index.html */
+    .sidebar {
+      position:fixed;
+      left:0;
+      top:0;
+      width:280px;
+      height:100%;
+      background: linear-gradient(180deg, #a777e8 0%, #7a5fc0 50%, #524598 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255, 255, 255, 0.15);
+      color:white;
+      z-index:1000;
+      overflow-y:auto;
+      box-shadow: 10px 0 30px rgba(0,0,0,0.2);
+      transition: transform 0.4s ease;
+      display:flex;
+      flex-direction:column;
+    }
+
+   .sidebar-header {
+      padding:40px 20px 30px;
+      text-align:center;
+      background: rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .profile-section {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+
+    .profile-pic {
+      width:100px;
+      height:100px;
+      border-radius:50%;
+      object-fit:cover;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    .user-name {
+      margin:15px 0 5px 0;
+      font-size:22px;
+      font-weight:700;
+      letter-spacing:1px;
+    }
+
+    .user-role {
+      margin:0;
+      font-size:15px;
+      opacity:0.9;
+      font-weight:400;
+    }
+
+    .menu-list {
+      list-style:none;
+      padding:10px 0;
+      margin:0;
+      flex-grow:1;
+    }
+
+    .menu-item {
+      padding:18px 30px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:18px;
+      font-size:17px;
+      font-weight:500;
+      transition:all 0.3s ease;
+    }
+
+    .menu-item:hover {
+      background: rgba(255, 255, 255, 0.12);
+      padding-left:38px;
+    }
+
+    .menu-item.active {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      margin: 8px 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      backdrop-filter: blur(10px);
+    }
+
+    .menu-item i {
+      font-size:22px;
+      width:30px;
+      text-align:center;
+    }
+
+    /* LOGOUT BUTTON AT BOTTOM */
+    .logout-item {
+      padding:18px 30px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:18px;
+      font-size:17px;
+      font-weight:500;
+      background: rgba(255, 255, 255, 0.1);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      transition:all 0.3s ease;
+    }
+
+    .logout-item:hover {
+      background: rgba(220, 50, 50, 0.4);
+      padding-left:38px;
+    }
+
+    .logout-item i {
+      font-size:22px;
+      width:30px;
+      text-align:center;
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      margin-left:280px;
+      min-height:100vh;
+      transition:margin-left 0.3s ease;
+      padding:20px;
+    }
+
+    .header {
+      background: rgba(156, 39, 176, 0.9);
+      backdrop-filter: blur(12px);
+      color:white;
+      padding:15px 60px 15px 20px;
+      font-size:20px;
+      position:relative;
+      border-radius:15px;
+      margin-bottom:20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      text-align:center;
+    }
+    .header .hamburger {
+      position:absolute;
+      left:20px;
+      top:50%;
+      transform:translateY(-50%);
+      font-size:24px;
+      cursor:pointer;
+      display:none;
+    }
+    .header-title {
+      margin:0;
+      font-size:20px;
+      font-weight:600;
+    }
+
+    .container { 
+      max-width:1100px; 
+      margin:auto; 
+    }
+
+    /* TABLE & FILTERS */
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 30px;
+      justify-content: center;
+    }
+
+    .filters input, .filters button {
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.2);
+      color: white;
+      font-size: 1rem;
+    }
+
+    .filters button {
+      background: #ffb300;
+      color: #000;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    /* FIX TABLE OVERFLOW ON MOBILE */
+    .table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 -20px;
+      padding: 0 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      overflow: hidden;
+      min-width: 900px; /* Forces horizontal scroll on small screens */
+    }
+
+    th, td {
+      padding: 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      white-space: nowrap;
+    }
+
+    th { background: rgba(255,255,255,0.25); color: white; }
+
+    tr:hover { background: rgba(255,255,255,0.2); cursor: pointer; }
+
+    .no-data { text-align: center; padding: 40px; color: rgba(255,255,255,0.7); }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(16px);
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      color: white;
+      position: relative;
+    }
+
+    .close { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: #fff; }
+
+    /* MOBILE VIEW */
+    @media (max-width: 992px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 15px;
+      }
+      .main-content.sidebar-open {
+        margin-left: 280px;
+      }
+      .header {
+        padding: 15px 60px 15px 60px;
+      }
+      .header .hamburger {
+        display: block;
+      }
+      .table-wrapper {
+        margin: 0 -15px;
+        padding: 0 15px;
+      }
+      table {
+        font-size: 13px;
+      }
+      th, td {
+        padding: 12px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .main-content.sidebar-open {
+        margin-left: 0;
+      }
+      .header {
+        padding: 15px 55px 15px 55px;
+      }
+      .filters {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+ <!-- SIDEBAR WITH LOGO & GLASS EFFECT -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="profile-section">
+        <img src="../../ASSETS/images/logo.jpeg" alt="MIB Logo" class="profile-pic">
+        <h3 class="user-name">MIB</h3>
+        <p class="user-role">MoMo Vendor</p>
+      </div>
+    </div>
+
+    <ul class="menu-list">
+      <li class="menu-item" onclick="navigate('index')"><i class="fas fa-home"></i> Dashboard</li>
+      <li class="menu-item" onclick="navigate('momo-transactions')"><i class="fas fa-mobile-alt"></i> MoMo Transactions</li>
+      <li class="menu-item active"><i class="fas fa-university"></i> Bank Deposits</li>
+      <li class="menu-item" onclick="navigate('bank-withdrawal-history')"><i class="fas fa-money-bill-wave"></i> Bank Withdrawals</li>
+      <li class="menu-item" onclick="navigate('sim-registration-history')"><i class="fas fa-user-plus"></i> SIM Registration</li>
+      <li class="menu-item" onclick="navigate('susu-history')"><i class="fas fa-piggy-bank"></i> Susu</li>
+      <li class="menu-item" onclick="navigate('airtime-history')"><i class="fas fa-phone-volume"></i> Airtime</li>
+      <li class="menu-item" onclick="navigate('my-history')"><i class="fas fa-history"></i> My History</li>
+      <li class="menu-item" onclick="navigate('profile')"><i class="fas fa-user"></i> Profile</li>
+    </ul>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content" id="mainContent">
+    <div class="header">
+      <i class="fas fa-bars hamburger" id="hamburger"></i>
+      <h1 class="header-title">My Transaction History</h1>
+    </div>
+
+    <div class="container">
+      <!-- Filters -->
+      <div class="filters">
+        <input type="date" id="startDate" title="Start Date">
+        <input type="date" id="endDate" title="End Date">
+        <input type="text" id="searchInput" placeholder="Search by name, phone, reference..." style="flex:1; min-width:250px;">
+        <button onclick="applyFilter()">Filter</button>
+        <button onclick="exportCSV()">Export CSV</button>
+      </div>
+
+      <!-- Table Wrapper for Mobile Scroll -->
+      <div class="table-wrapper">
+        <table id="historyTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Service</th>
+              <th>Customer</th>
+              <th>Phone/Account</th>
+              <th>Amount (GHS)</th>
+              <th>Reference</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="8" class="no-data">Loading your transactions...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt Modal -->
+  <div id="receiptModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="document.getElementById('receiptModal').style.display='none'">×</span>
+      <h3>Transaction Receipt</h3>
+      <div id="receiptContent"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    if (!token) {
+      alert('Please login first');
+      window.location.href = 'login.html';
+    }
+
+    const socket = io('http://localhost:8000');
+    let allTransactions = [];
+
+    // SIDEBAR TOGGLE FOR MOBILE
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('mainContent').classList.toggle('sidebar-open');
+    }
+
+    document.getElementById('hamburger').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleSidebar();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 992 && 
+          document.getElementById('sidebar').classList.contains('open') && 
+          !document.getElementById('sidebar').contains(e.target) && 
+          !document.getElementById('hamburger').contains(e.target)) {
+        toggleSidebar();
+      }
+    });
+
+    // NAVIGATION FUNCTION (FIXED THE ERROR)
+    function navigate(page) {
+      window.location.href = page + '.html';
+    }
+
+    async function fetchHistory() {
+      try {
+        const start = document.getElementById('startDate').value || '';
+        const end = document.getElementById('endDate').value || '';
+
+        const endpoints = [
+          `/api/transactions/momo?start=${start}&end=${end}`,
+          `/api/transactions/bank?start=${start}&end=${end}`,
+          `/api/transactions/airtime?start=${start}&end=${end}`,
+          `/api/transactions/susu?start=${start}&end=${end}`
+        ];
+
+        const responses = await Promise.all(endpoints.map(url => 
+          fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(res => res.ok ? res.json() : { success: false })
+        ));
+
+        allTransactions = [];
+        responses.forEach((res, i) => {
+          if (res.success && res.data) {
+            const service = ['MoMo', 'Bank', 'Airtime', 'Susu'][i];
+            res.data.forEach(t => {
+              allTransactions.push({ ...t, service });
+            });
+          }
+        });
+
+        renderTable(allTransactions);
+      } catch (err) {
+        console.error('Fetch error:', err);
+        document.getElementById('historyBody').innerHTML = 
+          `<tr><td colspan="8" class="no-data">Failed to load history. Try again.</td></tr>`;
+      }
+    }
+
+    function renderTable(transactions) {
+      const tbody = document.getElementById('historyBody');
+      if (!Array.isArray(transactions) || transactions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="no-data">No transactions found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = transactions.map(t => `
+        <tr onclick="showReceiptModal('${t.transaction_id || t.id}', '${t.service}')">
+          <td>${new Date(t.created_at).toLocaleString()}</td>
+          <td>${t.type || 'Top-up'}</td>
+          <td>${t.service}</td>
+          <td>${t.customer_name || '—'}</td>
+          <td>${t.customer_phone || t.customer_account || '—'}</td>
+          <td>GHS ${Number(t.amount || 0).toFixed(2)}</td>
+          <td>${t.reference_note || t.reference || '—'}</td>
+          <td>${t.status || 'success'}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function showReceiptModal(id, service) {
+      try {
+        const res = await fetch(`/records/receipt/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          const t = data.data;
+          document.getElementById('receiptContent').innerHTML = `
+            <p><strong>Service:</strong> ${service}</p>
+            <p><strong>ID:</strong> ${t.transaction_id || t.id}</p>
+            <p><strong>Customer:</strong> ${t.customer_name || '—'}</p>
+            <p><strong>Phone/Account:</strong> ${t.customer_phone || t.customer_account || '—'}</p>
+            <p><strong>Amount:</strong> GHS ${Number(t.amount || 0).toFixed(2)}</p>
+            <p><strong>Reference:</strong> ${t.reference_note || t.reference || '—'}</p>
+            <p><strong>Date:</strong> ${new Date(t.created_at).toLocaleString()}</p>
+          `;
+          document.getElementById('receiptModal').style.display = 'flex';
+        }
+      } catch (err) {
+        console.error('Receipt error:', err);
+      }
+    }
+
+    function applyFilter() {
+      const term = document.getElementById('searchInput').value.toLowerCase();
+      const start = document.getElementById('startDate').value;
+      const end = document.getElementById('endDate').value;
+
+      let filtered = allTransactions;
+
+      // Date filter
+      if (start || end) {
+        filtered = filtered.filter(t => {
+          const date = new Date(t.created_at);
+          if (start && new Date(start) > date) return false;
+          if (end && new Date(end) < date) return false;
+          return true;
+        });
+      }
+
+      // Text search
+      if (term) {
+        filtered = filtered.filter(t => 
+          (t.customer_name?.toLowerCase().includes(term)) ||
+          (t.customer_phone?.includes(term)) ||
+          (t.reference_note?.toLowerCase().includes(term)) ||
+          (t.reference?.toLowerCase().includes(term))
+        );
+      }
+
+      renderTable(filtered);
+    }
+
+    function exportCSV() {
+      if (allTransactions.length === 0) return alert('No data to export');
+      const csv = [
+        ['Date', 'Type', 'Service', 'Customer', 'Phone/Account', 'Amount', 'Reference', 'Status'],
+        ...allTransactions.map(t => [
+          new Date(t.created_at).toISOString(),
+          t.type || 'Top-up',
+          t.service,
+          t.customer_name || '',
+          t.customer_phone || t.customer_account || '',
+          t.amount,
+          t.reference_note || t.reference || '',
+          t.status || 'success'
+        ])
+      ].map(row => row.join(',')).join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'my_transactions.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Live updates
+    socket.on('newTransaction', (txn) => {
+      if (txn.agent_id === user.id) {
+        allTransactions.unshift(txn);
+        renderTable(allTransactions);
+      }
+    });
+
+    // Initial load
+    fetchHistory();
+    document.getElementById('searchInput').addEventListener('input', applyFilter);
+  </script>
+</body>
+</html>

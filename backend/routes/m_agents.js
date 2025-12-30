@@ -1,91 +1,93 @@
+// backend/routes/em_index.js — FIXED & WORKING WITH REAL TABLES
 const express = require("express");
 const router = express.Router();
-const db = require("../config/db"); // MySQL connection
-const authenticateToken = require("./auth").authenticateToken;
+const db = require("../config/db");
 
-// FULL AGENTS + PERFORMANCE DASHBOARD DATA
-router.get('/manager-agents-full', authenticateToken, async (req, res) => {
-  if (!['manager', 'admin'].includes(req.user.role)) {
-    return res.sendStatus(403); // forbidden
-  }
+// Promisify for async/await
+const query = (sql, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.query(sql, params, (err, results) => {
+      if (err) reject(err);
+      else resolve(results);
+    });
+  });
+};
+
+// DASHBOARD DATA — TODAY'S STATS FOR EMPLOYEE
+router.get("/dashboard/:userId", async (req, res) => {
+  const userId = parseInt(req.params.userId);
+  const today = new Date().toISOString().slice(0, 10);
 
   try {
-    // 🌍 1. Get manager's branch
-    const [branchRows] = await db.query(`
-      SELECT b.id, b.name, b.location 
-      FROM branches b 
-      JOIN users u ON u.branch_id = b.id 
-      WHERE u.id = ?
-    `, [req.user.id]);
-
-    const branch = branchRows[0];
-
-    if (!branch) {
-      return res.status(400).json({ error: 'No branch assigned' });
-    }
-
-    // 👥 2. All agents under that branch + today's sales
-    const [agents] = await db.query(`
+    // Total amount today (all services)
+    const totalRes = await query(`
       SELECT 
-        u.id, 
-        u.first_name, 
-        u.last_name, 
-        u.username, 
-        u.phone, 
-        u.status,
-        COALESCE(ads.momo_volume + ads.bank_volume, 0) AS today_sales
-      FROM users u
-      LEFT JOIN agent_daily_sales ads 
-        ON ads.agent_id = u.id 
-       AND ads.sale_date = CURDATE()
-      WHERE u.branch_id = ? 
-        AND u.role = 'employee'
-      ORDER BY today_sales DESC
-    `, [branch.id]);
+        COALESCE(SUM(amount), 0) AS total
+      FROM (
+        SELECT amount FROM momo_transactions WHERE agent_id = ? AND DATE(created_at) = ?
+        UNION ALL
+        SELECT amount FROM bank_transactions WHERE agent_id = ? AND DATE(created_at) = ?
+        UNION ALL
+        SELECT amount FROM airtime_logs WHERE employee_id = ? AND DATE(created_at) = ?
+        UNION ALL
+        SELECT amount FROM sim_sales WHERE employee_id = ? AND DATE(created_at) = ?
+      ) AS combined
+    `, [userId, today, userId, today, userId, today, userId, today]);
 
-    // 🏆 3. Top 5 agents this week
-    const [topThisWeek] = await db.query(`
+    // Count records today
+    const countRes = await query(`
       SELECT 
-        CONCAT(u.first_name, ' ', LEFT(u.last_name, 1), '.') AS name,
-        COALESCE(SUM(ads.momo_volume + ads.bank_volume), 0) AS total
-      FROM agent_daily_sales ads
-      JOIN users u ON u.id = ads.agent_id
-      WHERE ads.sale_date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
-        AND u.branch_id = ?
-      GROUP BY ads.agent_id
-      ORDER BY total DESC 
-      LIMIT 5
-    `, [branch.id]);
+        (SELECT COUNT(*) FROM momo_transactions WHERE agent_id = ? AND DATE(created_at) = ?) AS momo_count,
+        (SELECT COUNT(*) FROM bank_transactions WHERE agent_id = ? AND DATE(created_at) = ?) AS bank_count,
+        (SELECT COUNT(*) FROM airtime_logs WHERE employee_id = ? AND DATE(created_at) = ?) AS airtime_count,
+        (SELECT COUNT(*) FROM sim_sales WHERE employee_id = ? AND DATE(created_at) = ?) AS sim_count
+    `, [userId, today, userId, today, userId, today, userId, today]);
 
-    // 📈 4. Sales trend for the last 7 days
-    const [salesTrend] = await db.query(`
-      SELECT 
-        DATE(ads.sale_date) AS date,
-        COALESCE(SUM(ads.momo_volume + ads.bank_volume), 0) AS total
-      FROM agent_daily_sales ads
-      WHERE ads.sale_date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
-        AND EXISTS (
-          SELECT 1 
-          FROM users u 
-          WHERE u.id = ads.agent_id 
-            AND u.branch_id = ?
-        )
-      GROUP BY DATE(ads.sale_date)
-      ORDER BY date
-    `, [branch.id]);
+    const counts = countRes[0];
+    const totalRecords = counts.momo_count + counts.bank_count + counts.airtime_count + counts.sim_count;
 
-    // ✅ FINAL RESULT
     res.json({
-      branch,
-      agents,
-      topThisWeek,
-      salesTrend
+      totalTransactions: parseFloat(totalRes[0].total || 0),
+      momoTransactions: counts.momo_count,
+      bankTransactions: counts.bank_count,
+      totalRecords
     });
-
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Dashboard fetch error:", err);
+    res.status(500).json({ error: "Dashboard fetch failed" });
   }
 });
+
+// LATEST TRANSACTIONS
+router.get("/latest/:userId", async (req, res) => fetchLatest(req, res));
+router.get("/latest/:userId/:limit", async (req, res) => fetchLatest(req, res));
+
+async function fetchLatest(req, res) {
+  const userId = parseInt(req.params.userId);
+  const limit = parseInt(req.params.limit) || 10;
+
+  try {
+    const records = await query(`
+      SELECT customer_name, customer_phone, 'MoMo' AS type, amount, created_at, network AS source
+      FROM momo_transactions WHERE agent_id = ?
+      UNION ALL
+      SELECT customer_name, customer_account AS customer_phone, type, amount, created_at, bank_name AS source
+      FROM bank_transactions WHERE agent_id = ?
+      UNION ALL
+      SELECT customer_name, customer_phone, 'Airtime' AS type, amount, created_at, network AS source
+      FROM airtime_logs WHERE employee_id = ?
+      UNION ALL
+      SELECT customer_name, customer_phone, 'SIM' AS type, amount, created_at, network AS source
+      FROM sim_sales WHERE employee_id = ?
+      ORDER BY created_at DESC
+      LIMIT ?
+    `, [userId, userId, userId, userId, limit]);
+
+    res.json({ records });
+  } catch (err) {
+    console.error("Latest transactions error:", err);
+    res.status(500).json({ error: "Failed to fetch transactions" });
+  }
+}
 
 module.exports = router;

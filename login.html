@@ -1,34 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MoMo Banking Login</title>
-    <link rel="stylesheet" href="login.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome for icons -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Login — MIB MoMo Vendor</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      font-family:"Poppins",sans-serif;
+      min-height:100vh;
+      background: url('../ASSETS/images/logo.jpeg') center/cover no-repeat fixed;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#333;
+    }
+    body::before {
+      content:'';
+      position:absolute;
+      top:0; left:0; right:0; bottom:0;
+      background: rgba(80, 40, 140, 0.75);
+      backdrop-filter: blur(8px);
+      z-index:-1;
+    }
+    .login-container {
+      width:90%;
+      max-width:420px;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 30px;
+      padding: 50px 40px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      text-align:center;
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+    .logo {
+      width:120px;
+      height:120px;
+      border-radius:50%;
+      object-fit:cover;
+      border: 6px solid rgba(255,255,255,0.9);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      margin-bottom:25px;
+    }
+    h1 {
+      font-size:28px;
+      font-weight:800;
+      color:#4a148c;
+      margin-bottom:10px;
+      letter-spacing:1px;
+    }
+    .welcome-text {
+      font-size:18px;
+      color:#6a1b9a;
+      margin-bottom:40px;
+      font-weight:500;
+    }
+    .login-form {
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+    }
+    .input-group {
+      position:relative;
+    }
+    .input-group i {
+      position:absolute;
+      left:20px;
+      top:50%;
+      transform:translateY(-50%);
+      color:#8e24aa;
+      font-size:20px;
+      z-index:2;
+    }
+    .input-group input {
+      width:100%;
+      padding:18px 20px 18px 60px;
+      border:2px solid rgba(106,27,154,0.3);
+      border-radius:50px;
+      font-size:17px;
+      background:rgba(255,255,255,0.9);
+      transition:all 0.3s ease;
+      box-shadow:0 4px 15px rgba(0,0,0,0.05);
+    }
+    .input-group input:focus {
+      outline:none;
+      border-color:#ffb300;
+      background:white;
+      box-shadow:0 0 0 4px rgba(255,177,0,0.2);
+      transform:scale(1.02);
+    }
+    .login-btn {
+      margin-top:20px;
+      padding:18px;
+      background: linear-gradient(135deg, #ffb300, #ff8c00);
+      border:none;
+      border-radius:50px;
+      color:#000;
+      font-size:18px;
+      font-weight:bold;
+      cursor:pointer;
+      transition:all 0.4s ease;
+      box-shadow:0 8px 25px rgba(255,177,0,0.4);
+    }
+    .login-btn:hover {
+      transform:translateY(-5px);
+      box-shadow:0 15px 35px rgba(255,177,0,0.5);
+    }
+    .login-btn:active {
+      transform:translateY(-2px);
+    }
+    .forgot-text {
+      margin-top:25px;
+      font-size:15px;
+      color:#4a148c;
+    }
+    .forgot-text a {
+      color:#ffb300;
+      text-decoration:none;
+      font-weight:600;
+      transition:color 0.3s;
+    }
+    .forgot-text a:hover {
+      color:#ff8c00;
+      text-decoration:underline;
+    }
+    @media (max-width:480px) {
+      .login-container { padding:40px 30px; margin:20px; }
+      h1 { font-size:24px; }
+      .welcome-text { font-size:16px; }
+      .logo { width:100px; height:100px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-box">
-            
-            <header class="header">
-                <img src="../MOMOVENDER-master/ASSETS/images/background.jpg" alt="User Avatar" class="avatar">
-                <h1>Welcome, Nana!</h1>
-            </header>
-            <form class="login-form">
-                <div class="input-group">
-                    <i class="fas fa-user"></i>
-                    <input type="text" placeholder="Username" required>
-                </div>
-                <div class="input-group">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" placeholder="Password" required>
-                </div>
-                <button type="submit" class="login-btn">Login</button>
-            </form>
-            <p class="forgot-text">forgot your password? <a href="#">contact the manager</a></p>
-        </div>
-    </div>
-    <script src="login.js"></script>
+
+  <div class="login-container">
+    <img src="../ASSETS/images/logo.jpeg" alt="MIB MoMo Vendor" class="logo">
+
+    <h1>Welcome Back!</h1>
+    <p class="welcome-text">Sign in to your MoMo Vendor account</p>
+
+    <form class="login-form" id="loginForm">
+      <div class="input-group">
+        <i class="fas fa-user"></i>
+        <input type="text" id="username" placeholder="Username or Email" required autocomplete="username">
+      </div>
+
+      <div class="input-group">
+        <i class="fas fa-lock"></i>
+        <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
+      </div>
+
+      <button type="submit" class="login-btn">Login</button>
+    </form>
+
+    <p class="forgot-text">
+      Forgot your password? <a href="#">Contact Manager</a>
+    </p>
+  </div>
+
+  <script>
+    // Navigation function (used across your app)
+    function navigate(page) {
+      window.location.href = page + ".html";
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const emailOrUsername = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (!emailOrUsername || !password) {
+        alert("Please enter both username and password.");
+        return;
+      }
+
+      try {
+        const device_info = navigator.userAgent;
+        const ip = await fetch('https://api.ipify.org?format=json')
+          .then(res => res.json())
+          .then(data => data.ip)
+          .catch(() => 'Unknown');
+
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            emailOrUsername, 
+            password, 
+            device_info,
+            ip_address: ip
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Save token, user, and session_id to localStorage
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          localStorage.setItem("session_id", data.session_id); // ← For logout cleanup
+
+          alert(`Welcome back, ${data.user.first_name || data.user.username}!`);
+
+          // Redirect based on role
+          const role = data.user.role?.toLowerCase();
+          if (role === "admin") {
+            navigate("ADMIN/admin");
+          } else if (role === "manager") {
+            navigate("MANAGER/pages/Dashboard");
+          } else {
+            navigate("EMPLOYEE/pages/index");
+          }
+        } else {
+          alert("Login failed: " + (data.message || "Invalid credentials"));
+        }
+      } catch (error) {
+        console.error("LOGIN ERROR:", error);
+        alert("Connection failed. Check your internet or server status.");
+      }
+    });
+  </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Branch Performance Analytics • My MoMo Shop</title>
+  <title>Branches & Staff • MIB Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,13 +12,26 @@
     .glass { backdrop-filter: blur(16px) saturate(180%); background-color: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2); }
     .sidebar { transition: transform 0.3s ease-in-out; }
     @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); }
+      .sidebar { transform: translateX(-100%); position: fixed; top: 0; left: 0; width: 80%; height: 100%; z-index: 50; }
       .sidebar.open { transform: translateX(0); }
     }
     #toast { display: none; }
     #toast.show { display: block; animation: slideIn 0.5s, slideOut 0.5s 3.5s forwards; }
     @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
     @keyframes slideOut { to { transform: translateX(100%); opacity: 0; } }
+    /* Sidebar Styling */
+    .sidebar { padding: 30px 25px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(16px); border-right: 1px solid rgba(255, 255, 255, 0.2); }
+    .profile { text-align: center; margin-bottom: 40px; }
+    .profile img { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 5px solid rgba(255,255,255,0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .profile h2 { margin: 18px 0 8px; font-size: 24px; font-weight: 700; }
+    .profile p { font-size: 16px; opacity: 0.9; }
+    .menu { list-style: none; margin-top: 20px; }
+    .menu li { margin: 12px 0; }
+    .menu a { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border-radius: 16px; color: #fff; text-decoration: none; font-size: 17px; font-weight: 500; transition: all 0.3s ease; }
+    .menu a:hover, .menu a.active { background: rgba(255,255,255,0.25); transform: translateX(10px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+    .menu i { font-size: 20px; width: 30px; text-align: center; }
+    .logout-btn { margin-top: 50px; width: 100%; padding: 16px; border-radius: 16px; background: rgba(220,38,38,0.4); border: none; color: #fff; cursor: pointer; font-size: 17px; font-weight: bold; transition: all 0.3s; }
+    .logout-btn:hover { background: rgba(220,38,38,0.6); transform: translateY(-3px); }
   </style>
 </head>
 <body class="text-white min-h-screen">
@@ -31,23 +44,23 @@
   <div class="flex h-screen overflow-hidden">
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar fixed md:static inset-y-0 left-0 z-40 w-80 glass shadow-2xl flex flex-col">
-      <div class="p-8 text-center border-b border-white/20">
-        <div class="w-28 h-28 bg-white/20 rounded-full mx-auto mb-4 flex items-center justify-center text-5xl font-bold">A</div>
-        <h2 class="text-3xl font-bold">Welcome Admin</h2>
-        <p class="text-purple-200 mt-2">Queen of the Shop</p>
+    <aside class="sidebar glass" id="sidebar">
+      <div class="profile">
+        <img id="admin-photo" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Admin">
+        <h2 id="admin-name">Queen of Empire</h2>
+        <p>System Administrator</p>
       </div>
-      <nav class="flex-1 p-6">
-        <ul class="space-y-4">
-          <li><a href="admin.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-tachometer-alt text-xl"></i><span class="text-xl font-medium">Overview</span></a></li>
-          <li><a href="admin-agents.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-users text-xl"></i><span class="text-xl font-medium">Manage Agents</span></a></li>
-          <li><a href="admin-branches.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-building text-xl"></i><span class="text-xl font-medium">Branches & Staff</span></a></li>
-          <li><a href="admin-float.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-wallet text-xl"></i><span class="text-xl font-medium">Float Control</span></a></li>
-          <li><a href="admin-payroll.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-money-bill-wave text-xl"></i><span class="text-xl font-medium">Pay Salaries</span></a></li>
-          <li><a href="admin-reports.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl bg-white/20 shadow-lg"><i class="fas fa-chart-bar text-xl"></i><span class="text-xl font-medium">Reports</span></a></li>
-        </ul>
-      </nav>
-      <div class="p-6 border-t border-white/20 text-center"><p class="text-sm opacity-80">© 2025 My MoMo Empire</p></div>
+      <ul class="menu">
+        <li><a href="admin.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="admin-agents.html"><i class="fas fa-users"></i> All Agents</a></li>
+        <li><a href="admin-branches.html" class="active"><i class="fas fa-building"></i> Branches & Staff</a></li>
+        <li><a href="admin-float.html"><i class="fas fa-wallet"></i> Float Control</a></li>
+        <li><a href="admin-payroll.html"><i class="fas fa-money-bill-wave"></i> Pay Commission</a></li>
+        <li><a href="admin-reports.html"><i class="fas fa-chart-bar"></i> Reports</a></li>
+      </ul>
+      <button class="logout-btn" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
     </aside>
 
     <!-- Main Content -->
@@ -56,34 +69,37 @@
 
         <!-- Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
-          <h1 class="text-5xl font-bold">Branch Performance Analytics</h1>
-          <select id="date-range" class="px-6 py-4 rounded-2xl bg-white/10 text-white">
-            <option value="today">Today</option>
-            <option value="week">Last 7 Days</option>
-            <option value="month" selected>This Month</option>
-            <option value="all">All Time</option>
-          </select>
+          <h1 class="text-5xl font-bold">Branches & Staff Management</h1>
+          <button onclick="openCreateModal()" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-2xl font-bold shadow-lg">
+            <i class="fas fa-plus mr-2"></i> Create New Branch
+          </button>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-12">
-          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Total Branches</h3><p id="stat-branches" class="text-4xl font-bold mt-2">-</p></div>
-          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Total Revenue</h3><p id="stat-revenue" class="text-4xl font-bold mt-2 text-green-400">-</p></div>
-          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Total Transactions</h3><p id="stat-transactions" class="text-4xl font-bold mt-2 text-blue-400">-</p></div>
-          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Avg Revenue/Branch</h3><p id="stat-avg" class="text-4xl font-bold mt-2 text-yellow-400">-</p></div>
-          <div class="glass p-6 rounded-3xl text-center"><h3 class="text-lg opacity-80">Top Branch</h3><p id="stat-top" class="text-3xl font-bold mt-2 text-purple-300">-</p></div>
+        <!-- Create Branch Modal -->
+        <div id="createModal" class="modal fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+          <div class="glass p-8 rounded-3xl w-full max-w-lg">
+            <h2 class="text-3xl font-bold mb-6 text-center">Create New Branch</h2>
+            <form id="createBranchForm">
+              <div class="mb-4">
+                <label class="block text-lg mb-2">Branch Name</label>
+                <input type="text" id="branchName" class="w-full p-4 rounded-2xl bg-white/10 text-white" required>
+              </div>
+              <div class="mb-4">
+                <label class="block text-lg mb-2">Location</label>
+                <input type="text" id="branchLocation" class="w-full p-4 rounded-2xl bg-white/10 text-white">
+              </div>
+              <div class="flex justify-end gap-4 mt-6">
+                <button type="button" onclick="closeModal('createModal')" class="px-6 py-3 bg-gray-600 rounded-2xl">Cancel</button>
+                <button type="submit" class="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-2xl">Create Branch</button>
+              </div>
+            </form>
+          </div>
         </div>
 
-        <!-- Revenue Bar Chart -->
-        <div class="glass rounded-3xl p-8 mb-12 shadow-2xl">
-          <h2 class="text-3xl font-bold mb-6 text-center">Revenue by Branch (GHS)</h2>
-          <canvas id="revenueChart" height="100"></canvas>
-        </div>
-
-        <!-- Branches Performance Table -->
-        <div class="glass rounded-3xl overflow-hidden shadow-2xl">
+        <!-- Branches Table -->
+        <div class="glass rounded-3xl overflow-hidden shadow-2xl mb-12">
           <div class="p-8 border-b border-white/10">
-            <h2 class="text-3xl font-bold">Detailed Branch Performance</h2>
+            <h2 class="text-3xl font-bold">All Branches</h2>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full">
@@ -93,14 +109,40 @@
                   <th class="p-6 text-left text-xl font-bold">Location</th>
                   <th class="p-6 text-left text-xl font-bold">Manager</th>
                   <th class="p-6 text-left text-xl font-bold">Agents</th>
-                  <th class="p-6 text-left text-xl font-bold">Revenue (GHS)</th>
-                  <th class="p-6 text-left text-xl font-bold">Transactions</th>
+                  <th class="p-6 text-center text-xl font-bold">Actions</th>
                 </tr>
               </thead>
-              <tbody id="performanceTable">
-                <tr><td colspan="6" class="p-12 text-center opacity-60">Loading analytics...</td></tr>
+              <tbody id="branchesTable">
+                <tr><td colspan="5" class="p-12 text-center opacity-60">Loading branches...</td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Staff Assignment Section -->
+        <div class="glass rounded-3xl overflow-hidden shadow-2xl">
+          <div class="p-8 border-b border-white/10">
+            <h2 class="text-3xl font-bold">Assign Staff to Branch</h2>
+          </div>
+          <div class="p-8">
+            <form id="assignStaffForm" class="flex flex-col md:flex-row gap-6">
+              <div class="flex-1">
+                <label class="block text-lg mb-2">Select Staff</label>
+                <select id="staffSelect" class="w-full p-4 rounded-2xl bg-white/10 text-white" required>
+                  <option value="">Select Staff</option>
+                </select>
+              </div>
+              <div class="flex-1">
+                <label class="block text-lg mb-2">Assign to Branch</label>
+                <select id="branchSelect" class="w-full p-4 rounded-2xl bg-white/10 text-white" required>
+                  <option value="">Select Branch</option>
+                  <option value="null">No Branch (Unassign)</option>
+                </select>
+              </div>
+              <div class="flex items-end">
+                <button type="submit" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 rounded-2xl font-bold">Assign</button>
+              </div>
+            </form>
           </div>
         </div>
 
@@ -116,18 +158,35 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    const API_BASE = '/api/branches';
-    const token = localStorage.getItem('token');
+    // Simple apiFetch (localStorage token only)
+    const apiFetch = async (url, options = {}) => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert("Session expired. Please login again.");
+        window.location.href = '/login.html';
+        return;
+      }
 
-    if (!token) {
-      alert('Please login first');
-      window.location.href = '/login.html';
-    }
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers
+      };
 
-    let revenueChart;
+      const response = await fetch(url, { ...options, headers });
+      if (!response.ok) {
+        if (response.status === 401) {
+          alert("Session expired. Please login again.");
+          localStorage.clear();
+          window.location.href = '/login.html';
+        }
+        throw new Error(`HTTP error: ${response.status}`);
+      }
+      return await response.json();
+    };
 
+    // Toast notification
     function showToast(message, success = true) {
       const toast = document.getElementById('toast');
       const icon = document.getElementById('toast-icon');
@@ -138,73 +197,123 @@
       setTimeout(() => toast.classList.remove('show'), 4000);
     }
 
-    async function loadAnalytics() {
-      try {
-        const res = await fetch(API_BASE + '/analytics', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.message || 'Failed');
-
-        // Stats cards
-        document.getElementById('stat-branches').textContent = data.totalBranches;
-        document.getElementById('stat-revenue').textContent = 'GHS ' + Number(data.totalRevenue).toLocaleString();
-        document.getElementById('stat-transactions').textContent = data.totalTransactions.toLocaleString();
-        document.getElementById('stat-avg').textContent = 'GHS ' + Number(data.avgRevenue).toLocaleString();
-        document.getElementById('stat-top').textContent = data.topBranch.name;
-
-        // Bar chart
-        const ctx = document.getElementById('revenueChart').getContext('2d');
-        if (revenueChart) revenueChart.destroy();
-        revenueChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: data.performance.map(p => p.name),
-            datasets: [{
-              label: 'Revenue (GHS)',
-              data: data.performance.map(p => p.revenue),
-              backgroundColor: 'rgba(139, 92, 246, 0.6)',
-              borderColor: '#8b5cf6',
-              borderWidth: 2
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true } }
-          }
-        });
-
-        // Performance table
-        const tbody = document.querySelector('#performanceTable');
-        tbody.innerHTML = '';
-        data.performance.forEach(b => {
-          tbody.innerHTML += `
-            <tr class="hover:bg-white/10">
-              <td class="p-6 font-bold text-xl">${b.name}</td>
-              <td class="p-6">${b.location || '-'}</td>
-              <td class="p-6">${b.manager_fullname || b.manager_name || '<i class="opacity-60">None</i>'}</td>
-              <td class="p-6 text-center font-bold text-2xl text-purple-300">${b.agent_count}</td>
-              <td class="p-6 text-green-400 font-bold text-xl">GHS ${Number(b.revenue).toLocaleString()}</td>
-              <td class="p-6 text-blue-400 font-bold text-xl">${b.transactions.toLocaleString()}</td>
-            </tr>`;
-        });
-      } catch (err) {
-        showToast('Failed to load analytics', false);
-        console.error(err);
-      }
-    }
-
-    // Date range change
-    document.getElementById('date-range').addEventListener('change', loadAnalytics);
-
-    // Mobile menu
+    // Mobile menu toggle
     document.getElementById('menu-btn').addEventListener('click', () => {
       document.getElementById('sidebar').classList.toggle('open');
     });
 
-    // Load on start
-    loadAnalytics();
+    // Close sidebar on outside click (mobile)
+    document.addEventListener('click', (e) => {
+      const sidebar = document.getElementById('sidebar');
+      const menuBtn = document.getElementById('menu-btn');
+      if (window.innerWidth < 768 && !sidebar.contains(e.target) && !menuBtn.contains(e.target)) {
+        sidebar.classList.remove('open');
+      }
+    });
+
+    // Load branches + managers + staff
+    async function loadData() {
+      try {
+        const [branchesRes, managersRes, staffRes] = await Promise.all([
+          apiFetch('/api/admin/branches'),
+          apiFetch('/api/admin/branches/managers'),
+          apiFetch('/api/admin/branches/staff')
+        ]);
+
+        // Branches table
+        const tbody = document.getElementById('branchesTable');
+        tbody.innerHTML = branchesRes.branches.map(b => `
+          <tr class="hover:bg-white/10">
+            <td class="p-6 font-bold text-xl">${b.name}</td>
+            <td class="p-6">${b.location || '-'}</td>
+            <td class="p-6">${b.manager_fullname || b.manager_name || '<i class="opacity-60">None</i>'}</td>
+            <td class="p-6 text-center font-bold text-2xl text-purple-300">${b.agent_count}</td>
+            <td class="p-6 text-center">
+              <button onclick="editBranch(${b.id})" class="text-blue-400 hover:text-blue-300 mr-4"><i class="fas fa-edit"></i></button>
+              <button onclick="deleteBranch(${b.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+
+        // Branch select for assignment
+        const branchSelect = document.getElementById('branchSelect');
+        branchSelect.innerHTML = '<option value="">Select Branch</option><option value="null">No Branch (Unassign)</option>';
+        branchesRes.branches.forEach(b => {
+          branchSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+        });
+
+        // Staff select
+        const staffSelect = document.getElementById('staffSelect');
+        staffSelect.innerHTML = '<option value="">Select Staff</option>';
+        staffRes.staff.forEach(s => {
+          staffSelect.innerHTML += `<option value="${s.id}">${s.fullname} (${s.role}) - ${s.branch_name || 'Unassigned'}</option>`;
+        });
+
+        showToast('Data loaded successfully!', true);
+      } catch (err) {
+        console.error("Load data error:", err);
+        showToast('Failed to load data. Check console.', false);
+      }
+    }
+
+    // Create branch form
+    document.getElementById('createBranchForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = document.getElementById('branchName').value.trim();
+      const location = document.getElementById('branchLocation').value.trim();
+
+      if (!name) return showToast('Branch name is required', false);
+
+      try {
+        await apiFetch('/api/admin/branches', {
+          method: 'POST',
+          body: JSON.stringify({ name, location })
+        });
+        showToast('Branch created successfully!', true);
+        closeModal('createModal');
+        loadData();
+      } catch (err) {
+        showToast('Failed to create branch', false);
+      }
+    });
+
+    // Assign staff form
+    document.getElementById('assignStaffForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const user_id = document.getElementById('staffSelect').value;
+      const branch_id = document.getElementById('branchSelect').value;
+
+      if (!user_id) return showToast('Please select staff', false);
+
+      try {
+        await apiFetch('/api/admin/branches/assign-staff', {
+          method: 'POST',
+          body: JSON.stringify({ user_id, branch_id: branch_id === 'null' ? null : branch_id })
+        });
+        showToast('Staff assigned successfully!', true);
+        loadData();
+      } catch (err) {
+        showToast('Failed to assign staff', false);
+      }
+    });
+
+    // Modal helpers
+    function openCreateModal() {
+      document.getElementById('createModal').classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    // Logout
+    function logout() {
+      localStorage.clear();
+      window.location.href = '/login.html';
+    }
+
+    // Load data on page start
+    loadData();
   </script>
 </body>
 </html>

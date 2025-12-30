@@ -2,221 +2,560 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>MoMo Transactions</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body { margin:0; font-family:"Poppins",sans-serif; background:#f8f9fa; min-height:100vh; }
-    .header { background:#6a1b9a; color:white; padding:15px; text-align:center; font-size:20px; position:relative; }
-    .header .back { position:absolute; left:15px; top:15px; font-size:24px; cursor:pointer; }
-    .container { padding:20px; max-width:1000px; margin:auto; }
-    .search-bar { width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; font-size:16px; margin-bottom:15px; }
+    * { box-sizing:border-box; }
     
-    .filter-card { background:white; padding:20px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1); margin-bottom:20px; }
-    .date-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px; }
-    .date-row input { flex:1; min-width:200px; padding:10px; border:1px solid #ddd; border-radius:8px; }
-    .report-type { width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px; }
-    .apply-btn { background:#ffb300; color:black; border:none; padding:12px 30px; border-radius:50px; font-weight:bold; cursor:pointer; width:100%; font-size:16px; }
+    /* FULL PAGE BACKGROUND WITH LOGO */
+    body {
+      margin:0;
+      font-family:"Poppins",sans-serif;
+      min-height:100vh;
+      background: url('../../ASSETS/images/logo.jpeg') center/cover no-repeat fixed;
+      position:relative;
+    }
+    body::before {
+      content:'';
+      position:absolute;
+      top:0; left:0; right:0; bottom:0;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(10px);
+      z-index:-1;
+    }
+
+    /* GLASSMORPHISM SIDEBAR - PURPLE-BLUE GRADIENT */
+    .sidebar {
+      position:fixed;
+      left:0;
+      top:0;
+      width:280px;
+      height:100%;
+      background: linear-gradient(180deg, #a777e8 0%, #7a5fc0 50%, #524598 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255, 255, 255, 0.15);
+      color:white;
+      z-index:1000;
+      overflow-y:auto;
+      box-shadow: 10px 0 30px rgba(0,0,0,0.2);
+      transition: transform 0.4s ease;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .sidebar-header {
+      padding:40px 20px 30px;
+      text-align:center;
+      background: rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .profile-section {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+
+    .profile-pic {
+      width:100px;
+      height:100px;
+      border-radius:50%;
+      object-fit:cover;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    .user-name {
+      margin:15px 0 5px 0;
+      font-size:22px;
+      font-weight:700;
+      letter-spacing:1px;
+    }
+
+    .user-role {
+      margin:0;
+      font-size:15px;
+      opacity:0.9;
+      font-weight:400;
+    }
+
+    .menu-list {
+      list-style:none;
+      padding:10px 0;
+      margin:0;
+      flex-grow:1;
+    }
+
+    .menu-item {
+      padding:18px 30px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:18px;
+      font-size:17px;
+      font-weight:500;
+      transition:all 0.3s ease;
+    }
+
+    .menu-item:hover {
+      background: rgba(255, 255, 255, 0.12);
+      padding-left:38px;
+    }
+
+    .menu-item.active {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      margin: 8px 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      backdrop-filter: blur(10px);
+    }
+
+    .menu-item i {
+      font-size:22px;
+      width:30px;
+      text-align:center;
+    }
+
+    /* LOGOUT BUTTON */
+    .logout-item {
+      padding:18px 30px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:18px;
+      font-size:17px;
+      font-weight:500;
+      background: rgba(255, 255, 255, 0.1);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      transition:all 0.3s ease;
+    }
+
+    .logout-item:hover {
+      background: rgba(220, 50, 50, 0.4);
+      padding-left:38px;
+    }
+
+    .logout-item i {
+      font-size:22px;
+      width:30px;
+      text-align:center;
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      margin-left:280px;
+      min-height:100vh;
+      transition:margin-left 0.3s ease;
+      padding:20px;
+    }
+
+    .header {
+      background: rgba(106, 27, 154, 0.9);
+      backdrop-filter: blur(12px);
+      color:white;
+      padding:15px 60px 15px 20px;
+      font-size:20px;
+      position:relative;
+      border-radius:15px;
+      margin-bottom:20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      text-align:center;
+    }
+    .header .hamburger {
+      position:absolute;
+      left:20px;
+      top:50%;
+      transform:translateY(-50%);
+      font-size:24px;
+      cursor:pointer;
+      display:none;
+    }
+    .header-title {
+      margin:0;
+      font-size:20px;
+      font-weight:600;
+    }
+
+    .container { 
+      max-width:1100px; 
+      margin:auto; 
+    }
+
+    .search-bar, 
+    .filter-card, 
+    table, 
+    .export-btn {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .search-bar { 
+      width:100%; 
+      padding:14px 16px; 
+      border-radius:15px; 
+      font-size:16px; 
+      margin-bottom:20px;
+    }
     
-    .export-buttons { display:flex; gap:10px; margin:20px 0; }
-    .export-btn { flex:1; padding:12px; border:none; border-radius:10px; color:white; font-weight:bold; cursor:pointer; }
+    .filter-card { 
+      padding:25px; 
+      border-radius:20px; 
+      margin-bottom:20px; 
+    }
+    .date-row { 
+      display:flex; 
+      gap:15px; 
+      flex-wrap:wrap; 
+      margin-bottom:20px; 
+    }
+    .date-row input { 
+      flex:1; 
+      min-width:200px; 
+      padding:12px; 
+      border-radius:12px; 
+      border:1px solid rgba(0,0,0,0.1);
+    }
+    .apply-btn { 
+      background:#ffb300; 
+      color:black; 
+      border:none; 
+      padding:14px 30px; 
+      border-radius:50px; 
+      font-weight:bold; 
+      cursor:pointer; 
+      width:100%; 
+      font-size:16px; 
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(255,177,0,0.3);
+    }
+    .apply-btn:hover { 
+      background:#ffa000; 
+      transform:translateY(-2px);
+    }
+    
+    .export-buttons { 
+      display:flex; 
+      gap:15px; 
+      margin:25px 0; 
+    }
+    .export-btn { 
+      flex:1; 
+      padding:14px; 
+      border-radius:15px; 
+      font-weight:bold; 
+      cursor:pointer; 
+      transition:all 0.2s;
+    }
+    .export-btn:hover { 
+      transform:translateY(-3px);
+      opacity:0.95;
+    }
     .pdf-btn { background:#e91e63; }
     .excel-btn { background:#1e88e5; }
 
-    table { width:100%; border-collapse:collapse; background:white; border-radius:15px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
-    th { background:#6a1b9a; color:white; padding:15px; text-align:left; }
-    td { padding:15px; border-bottom:1px solid #eee; }
-    .status { padding:6px 12px; border-radius:20px; font-size:12px; font-weight:bold; }
-    .completed { background:#c8e6c9; color:#2e7d32; }
-    .canceled { background:#ffcdd2; color:#c62828; }
-    .amount { font-weight:bold; color:#2e7d32; }
-    .no-data { text-align:center; padding:40px; color:#777; }
+    table { 
+      border-radius:20px; 
+      overflow:hidden; 
+    }
+    th { 
+      background:rgba(106, 27, 154, 0.9); 
+      padding:18px; 
+    }
+    td { 
+      padding:18px; 
+    }
+    .amount { 
+      font-weight:bold; 
+      color:#2e7d32; 
+    }
+    .status { 
+      padding:8px 14px; 
+      border-radius:20px; 
+      font-size:13px; 
+      font-weight:bold; 
+    }
+    .completed { 
+      background:#c8e6c9; 
+      color:#2e7d32; 
+    }
+    .canceled { 
+      background:#ffcdd2; 
+      color:#c62828; 
+    }
+    .no-data { 
+      padding:80px; 
+      font-size:18px; 
+    }
+
+    /* MOBILE VIEW */
+    @media (max-width:992px) {
+      .sidebar {
+        transform:translateX(-100%);
+      }
+      .sidebar.open { transform:translateX(0); }
+      .main-content { 
+        margin-left:0; 
+        padding:15px;
+      }
+      .main-content.sidebar-open { margin-left:280px; }
+      .header { 
+        padding:15px 60px 15px 60px;
+      }
+      .header .hamburger { display:block; }
+    }
+
+    @media (max-width:576px) {
+      .main-content.sidebar-open { margin-left:0; }
+      .header { padding:15px 55px 15px 55px; }
+      .date-row { flex-direction:column; }
+      .export-buttons { flex-direction:column; }
+    }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <div class="back" onclick="navigate('index')"><i class="fas fa-arrow-left"></i></div>
-    MoMo Transactions
-  </div>
-
-  <div class="container">
-    <input type="text" class="search-bar" id="searchInput" placeholder="Search transactions..." />
-
-    <div class="filter-card">
-      <h3 style="margin-top:0; color:#6a1b9a;">Filter Reports</h3>
-      <div class="date-row">
-        <input type="date" id="startDate" />
-        <input type="date" id="endDate" />
+  <!-- SIDEBAR WITH LOGO & LOGOUT -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="profile-section">
+        <img src="../../ASSETS/images/logo.jpeg" alt="MIB Logo" class="profile-pic">
+        <h3 class="user-name">MIB</h3>
+        <p class="user-role">MoMo Vendor</p>
       </div>
-      <select class="report-type">
-        <option>MoMo Transactions</option>
-      </select>
-      <button class="apply-btn" onclick="applyFilter()">Apply Filters</button>
     </div>
 
-    <div class="export-buttons">
-      <button class="export-btn pdf-btn" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Download PDF</button>
-      <button class="export-btn excel-btn" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Download Excel</button>
+    <ul class="menu-list">
+      <li class="menu-item" onclick="navigate('index')"><i class="fas fa-home"></i> Dashboard</li>
+      <li class="menu-item active"><i class="fas fa-mobile-alt"></i> MoMo Transactions</li>
+      <li class="menu-item" onclick="navigate('bank-deposits')"><i class="fas fa-university"></i> Bank Deposits</li>
+      <li class="menu-item" onclick="navigate('bank-withdrawal-history')"><i class="fas fa-money-bill-wave"></i> Bank Withdrawals</li>
+      <li class="menu-item" onclick="navigate('sim-registration-history')"><i class="fas fa-user-plus"></i> SIM Registration</li>
+      <li class="menu-item" onclick="navigate('susu-history')"><i class="fas fa-piggy-bank"></i> Susu</li>
+      <li class="menu-item" onclick="navigate('airtime-history')"><i class="fas fa-phone-volume"></i> Airtime</li>
+      <li class="menu-item" onclick="navigate('my-history')"><i class="fas fa-history"></i> My History</li>
+      <li class="menu-item" onclick="navigate('profile')"><i class="fas fa-user"></i> Profile</li>
+    </ul>
+
+    <div class="logout-item" onclick="logout()">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content" id="mainContent">
+    <div class="header">
+      <i class="fas fa-bars hamburger" id="hamburger"></i>
+      <h1 class="header-title">MoMo Transactions</h1>
     </div>
 
-    <table id="transactionsTable">
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Customer</th>
-          <th>Amount</th>
-          <th>Status</th>
-          <th>Date</th>
-        </tr>
-      </thead>
-      <tbody id="transactionsBody">
-        <!-- Filled by JS -->
-      </tbody>
-    </table>
+    <div class="container">
+      <input type="text" class="search-bar" id="searchInput" placeholder="Search transactions..." />
+
+      <div class="filter-card">
+        <h3 style="margin-top:0; color:#6a1b9a;">Filter Reports</h3>
+        <div class="date-row">
+          <input type="date" id="startDate" />
+          <input type="date" id="endDate" />
+        </div>
+        <button class="apply-btn" onclick="applyFilter()">Apply Filters</button>
+      </div>
+
+      <div class="export-buttons">
+        <button class="export-btn pdf-btn" onclick="exportToPDF()">Download PDF</button>
+        <button class="export-btn excel-btn" onclick="exportToExcel()">Download Excel</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Customer</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="transactionsBody">
+          <tr><td colspan="5" class="no-data">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
+  <!-- Inline JavaScript (no external api.js needed) -->
   <script>
-// Global variables
-const token = localStorage.getItem('token');
-const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-// Navigation
-window.navigate = (page) => location.href = page + '.html';
+    window.navigate = (page) => location.href = page + '.html';
 
-// Back button
-document.querySelector('.back').addEventListener('click', () => {
-  window.location.href = 'index.html';
-});
+    let allTransactions = [];
 
-let allTransactions = [];
+    // Sidebar toggle
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
 
-// Load transactions
-async function loadTransactions() {
-  if (!token) {
-    alert("Please login first");
-    window.location.href = '/login.html';
-    return;
-  }
-
-  // Default: Last 7 days
-  const end = new Date();
-  const start = new Date();
-  start.setDate(end.getDate() - 7);
-
-  document.getElementById('startDate').value = start.toISOString().split('T')[0];
-  document.getElementById('endDate').value = end.toISOString().split('T')[0];
-
-  await fetchTransactions(start, end);
-}
-
-// Fetch using relative path — WORKS ON PHONE & NGROK
-async function fetchTransactions(startDate, endDate) {
-  try {
-    const startStr = startDate.toISOString().split('T')[0];
-    const endStr = endDate.toISOString().split('T')[0];
-
-    const res = await fetch(`/api/transactions/momo?start=${startStr}&end=${endStr}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
+    hamburger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebar.classList.toggle('open');
+      mainContent.classList.toggle('sidebar-open');
     });
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 992 && 
+          sidebar.classList.contains('open') && 
+          !sidebar.contains(e.target) && 
+          !hamburger.contains(e.target)) {
+        sidebar.classList.remove('open');
+        mainContent.classList.remove('sidebar-open');
+      }
+    });
+
+    // Logout function
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login.html';
+      }
     }
 
-    const data = await res.json();
-    allTransactions = data.data || data.transactions || [];
-    renderTable(allTransactions);
-  } catch (err) {
-    console.error('Load error:', err);
-    document.getElementById('transactionsBody').innerHTML = 
-      `<tr><td colspan="5" class="no-data">Error loading transactions. Check connection or login.</td></tr>`;
-  }
-}
+    async function loadTransactions() {
+      if (!token) {
+        alert("Please login first");
+        window.location.href = '/login.html';
+        return;
+      }
 
-// Render table
-function renderTable(transactions) {
-  const tbody = document.getElementById('transactionsBody');
-  if (transactions.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="no-data">No MoMo transactions found</td></tr>`;
-    return;
-  }
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 7);
 
-  tbody.innerHTML = transactions.map(t => `
-    <tr>
-      <td>${t.type === 'deposit' ? 'Deposit' : 'Withdrawal'}</td>
-      <td>${t.customer_name || t.customer_phone || 'Unknown'}</td>
-      <td class="amount">GHS ${parseFloat(t.amount || 0).toFixed(2)}</td>
-      <td><span class="status completed">${(t.status || 'success').toUpperCase()}</span></td>
-      <td>${new Date(t.created_at).toLocaleDateString()}</td>
-    </tr>
-  `).join('');
-}
+      document.getElementById('startDate').value = start.toISOString().split('T')[0];
+      document.getElementById('endDate').value = end.toISOString().split('T')[0];
 
-// Apply filter
-window.applyFilter = async () => {
-  const start = document.getElementById('startDate').value;
-  const end = document.getElementById('endDate').value;
-  if (!start || !end) return alert("Select both dates");
-
-  await fetchTransactions(new Date(start), new Date(end));
-};
-
-// Search
-document.getElementById('searchInput').addEventListener('input', (e) => {
-  const term = e.target.value.toLowerCase();
-  const filtered = allTransactions.filter(t => 
-    (t.customer_name && t.customer_name.toLowerCase().includes(term)) ||
-    (t.customer_phone && t.customer_phone.includes(term)) ||
-    (t.amount && t.amount.toString().includes(term))
-  );
-  renderTable(filtered);
-});
-
-// Export to PDF
-window.exportToPDF = () => {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.setFontSize(18);
-  doc.text("MoMo Transactions Report", 14, 20);
-  doc.setFontSize(12);
-  doc.text(`Agent: ${user.first_name || ''} ${user.last_name || ''}`, 14, 30);
-  doc.text(`Period: ${document.getElementById('startDate').value} to ${document.getElementById('endDate').value}`, 14, 38);
-
-  let y = 50;
-  allTransactions.forEach(t => {
-    const line = `${new Date(t.created_at).toLocaleDateString()} | ${t.customer_name || t.customer_phone} | GHS ${t.amount} | ${t.type.toUpperCase()}`;
-    doc.text(line, 14, y);
-    y += 10;
-    if (y > 270) {
-      doc.addPage();
-      y = 20;
+      await fetchTransactions(start, end);
     }
-  });
 
-  doc.save("momo_transactions.pdf");
-};
+    async function fetchTransactions(startDate, endDate) {
+      try {
+        const startStr = startDate.toISOString().split('T')[0];
+        const endStr = endDate.toISOString().split('T')[0];
 
-// Export to Excel
-window.exportToExcel = () => {
-  const data = allTransactions.map(t => ({
-    Date: new Date(t.created_at).toLocaleDateString(),
-    Customer: t.customer_name || t.customer_phone || 'Unknown',
-    Type: t.type === 'deposit' ? 'Deposit' : 'Withdrawal',
-    Amount: parseFloat(t.amount || 0),
-    Status: t.status || 'success'
-  }));
+        const res = await fetch(`/api/transactions/momo?start=${startStr}&end=${endStr}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "MoMo Transactions");
-  XLSX.writeFile(wb, "momo_transactions.xlsx");
-};
+        if (!res.ok) {
+          console.error(`HTTP ${res.status}: ${res.statusText}`);
+          throw new Error(`Failed to load transactions (HTTP ${res.status})`);
+        }
 
-// Load on page load
-window.addEventListener('DOMContentLoaded', loadTransactions);
-</script>
+        const response = await res.json();
+
+        let momoTxns = [];
+        if (response.success && Array.isArray(response.data)) {
+          momoTxns = response.data;
+        } else if (Array.isArray(response)) {
+          momoTxns = response;
+        }
+
+        allTransactions = momoTxns;
+        renderTable(allTransactions);
+      } catch (err) {
+        console.error('MoMo transactions load error:', err);
+        document.getElementById('transactionsBody').innerHTML = 
+          `<tr><td colspan="5" class="no-data">Error loading transactions: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderTable(transactions) {
+      const tbody = document.getElementById('transactionsBody');
+      if (transactions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="no-data">No MoMo transactions found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = transactions.map(t => {
+        const statusClass = (t.status || 'completed').toLowerCase() === 'completed' ? 'completed' : 'canceled';
+        const typeLabel = t.type === 'deposit' ? 'Deposit' : 'Withdrawal';
+        return `
+          <tr>
+            <td>${typeLabel}</td>
+            <td>${t.customer_name || t.customer_phone || 'Unknown'}</td>
+            <td class="amount">GHS ${parseFloat(t.amount || 0).toFixed(2)}</td>
+            <td><span class="status ${statusClass}">${(t.status || 'completed').toUpperCase()}</span></td>
+            <td>${new Date(t.created_at).toLocaleDateString()}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.applyFilter = async () => {
+      const start = document.getElementById('startDate').value;
+      const end = document.getElementById('endDate').value;
+      if (!start || !end) return alert("Please select both dates");
+      await fetchTransactions(new Date(start), new Date(end));
+    };
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      const filtered = allTransactions.filter(t => 
+        (t.customer_name && t.customer_name.toLowerCase().includes(term)) ||
+        (t.customer_phone && t.customer_phone.includes(term)) ||
+        (t.amount && t.amount.toString().includes(term)) ||
+        (t.type && t.type.toLowerCase().includes(term))
+      );
+      renderTable(filtered);
+    });
+
+    window.exportToPDF = () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text("MoMo Transactions Report", 14, 20);
+      doc.setFontSize(12);
+      doc.text(`Agent: ${user.first_name || ''} ${user.last_name || ''}`, 14, 30);
+      doc.text(`Period: ${document.getElementById('startDate').value} to ${document.getElementById('endDate').value}`, 14, 38);
+
+      let y = 50;
+      allTransactions.forEach(t => {
+        const line = `${new Date(t.created_at).toLocaleDateString()} | ${t.customer_name || t.customer_phone || 'Unknown'} | ${t.type.toUpperCase()} | GHS ${t.amount || 0}`;
+        doc.text(line, 14, y);
+        y += 10;
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+
+      doc.save("momo_transactions.pdf");
+    };
+
+    window.exportToExcel = () => {
+      const data = allTransactions.map(t => ({
+        Date: new Date(t.created_at).toLocaleDateString(),
+        Customer: t.customer_name || t.customer_phone || 'Unknown',
+        Type: t.type === 'deposit' ? 'Deposit' : 'Withdrawal',
+        Amount: parseFloat(t.amount || 0),
+        Status: t.status || 'completed'
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "MoMo Transactions");
+      XLSX.writeFile(wb, "momo_transactions.xlsx");
+    };
+
+    window.addEventListener('DOMContentLoaded', loadTransactions);
+  </script>
 </body>
 </html>

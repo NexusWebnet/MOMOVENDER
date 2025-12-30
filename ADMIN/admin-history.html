@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>History Log • My MoMo Shop</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: 'Segoe UI', sans-serif; }
+    .glass { backdrop-filter: blur(16px) saturate(180%); background-color: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2); }
+    .sidebar { transition: transform 0.3s ease-in-out; }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); position: fixed; top: 0; left: 0; width: 80%; height: 100%; z-index: 50; }
+      .sidebar.open { transform: translateX(0); }
+    }
+    #toast { display: none; }
+    #toast.show { display: block; animation: slideIn 0.5s, slideOut 0.5s 3.5s forwards; }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes slideOut { to { transform: translateX(100%); opacity: 0; } }
+    .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
+    @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .sidebar {
+      padding: 30px 25px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(16px);
+      border-right: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .profile { text-align: center; margin-bottom: 40px; }
+    .profile img { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 5px solid rgba(255,255,255,0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .profile h2 { margin: 18px 0 8px; font-size: 24px; font-weight: 700; }
+    .profile p { font-size: 16px; opacity: 0.9; }
+
+    .menu { list-style: none; margin-top: 20px; }
+    .menu li { margin: 12px 0; }
+    .menu a { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border-radius: 16px; color: #fff; text-decoration: none; font-size: 17px; font-weight: 500; transition: all 0.3s ease; }
+    .menu a:hover, .menu a.active { background: rgba(255,255,255,0.25); transform: translateX(10px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+    .menu i { font-size: 20px; width: 30px; text-align: center; }
+
+    .logout-btn {
+      margin-top: 50px;
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(220,38,38,0.4);
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 17px;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+    .logout-btn:hover { background: rgba(220,38,38,0.6); transform: translateY(-3px); }
+  </style>
+</head>
+<body class="text-white min-h-screen">
+
+  <button id="menu-btn" class="md:hidden fixed top-6 left-6 z-50 bg-white/20 p-4 rounded-2xl backdrop-blur-lg shadow-xl">
+    <i class="fas fa-bars text-2xl"></i>
+  </button>
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="sidebar glass" id="sidebar">
+      <div class="profile">
+        <img id="admin-photo" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Admin">
+        <h2 id="admin-name">Queen of Empire</h2>
+        <p>System Administrator</p>
+      </div>
+      <ul class="menu">
+        <li><a href="admin.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="admin-agents.html"><i class="fas fa-users"></i> All Agents</a></li>
+        <li><a href="admin-float.html"><i class="fas fa-wallet"></i> Float Control</a></li>
+        <li><a href="admin-payroll.html"><i class="fas fa-money-bill-wave"></i> Pay Commission</a></li>
+        <li><a href="admin-branch.html"><i class="fas fa-building"></i> Branches</a></li>
+        <li><a href="admin-reports.html"><i class="fas fa-chart-bar"></i> Reports</a></li>
+        <li><a href="admin-history.html" class="active"><i class="fas fa-history"></i> History Log</a></li>
+      </ul>
+      <button class="logout-btn" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-8 md:p-12">
+      <div class="max-w-7xl mx-auto">
+
+        <div class="glass p-8 rounded-3xl mb-8">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <h1 class="text-5xl font-bold">Total History Log</h1>
+            <div class="flex flex-wrap gap-4">
+              <input type="date" id="filter-start" class="px-6 py-4 rounded-2xl bg-white/10 text-white">
+              <input type="date" id="filter-end" class="px-6 py-4 rounded-2xl bg-white/10 text-white">
+              <select id="filter-agent" class="px-6 py-4 rounded-2xl bg-white/10 text-white">
+                <option value="">All Agents</option>
+              </select>
+              <select id="filter-type" class="px-6 py-4 rounded-2xl bg-white/10 text-white">
+                <option value="">All Types</option>
+                <option value="login">Login</option>
+                <option value="logout">Logout</option>
+                <option value="momo">MoMo</option>
+                <option value="bank">Bank</option>
+                <option value="airtime">Airtime</option>
+                <option value="sim">SIM Registration</option>
+                <option value="susu">Susu</option>
+              </select>
+              <button onclick="loadHistory(true)" class="bg-white/20 px-8 py-4 rounded-2xl hover:bg-white/30">
+                <i class="fas fa-filter mr-2"></i> Filter
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass rounded-3xl overflow-hidden shadow-2xl mb-8">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-white/10">
+                <tr>
+                  <th class="p-6 text-left text-xl font-bold">Date & Time</th>
+                  <th class="p-6 text-left text-xl font-bold">Agent</th>
+                  <th class="p-6 text-left text-xl font-bold">Action</th>
+                  <th class="p-6 text-left text-xl font-bold">Details</th>
+                  <th class="p-6 text-left text-xl font-bold">Amount</th>
+                  <th class="p-6 text-left text-xl font-bold">Type</th>
+                </tr>
+              </thead>
+              <tbody id="history-table">
+                <tr><td colspan="6" class="p-12 text-center text-purple-300 text-xl">Loading history...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="p-6 text-center">
+            <button id="load-more" onclick="loadHistory()" class="bg-white/20 hover:bg-white/30 px-8 py-4 rounded-2xl hidden">Load More</button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-6 justify-center">
+          <button onclick="exportExcel()" class="bg-green-600 text-white px-12 py-6 rounded-3xl text-2xl font-bold hover:bg-green-700 shadow-xl">
+            <i class="fas fa-file-excel mr-3"></i> Export Excel
+          </button>
+          <button onclick="downloadPDF()" class="bg-blue-600 text-white px-12 py-6 rounded-3xl text-2xl font-bold hover:bg-blue-700 shadow-xl">
+            <i class="fas fa-download mr-3"></i> Download PDF
+          </button>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="fixed bottom-8 right-8 z-50">
+    <div class="bg-white text-gray-800 px-8 py-5 rounded-2xl shadow-2xl flex items-center gap-4">
+      <i id="toast-icon" class="fas fa-check-circle text-3xl text-green-500"></i>
+      <span id="toast-message" class="font-bold text-xl"></span>
+    </div>
+  </div>
+
+  <script>
+    const apiFetch = async (url, options = {}) => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert("Session expired. Please login again.");
+        window.location.href = '/login.html';
+      }
+      const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...options.headers };
+      const res = await fetch(url, { ...options, headers });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    };
+
+    let currentPage = 1;
+    let hasMore = true;
+    let historyData = [];
+
+    function showToast(msg, success = true) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-icon').className = success ? "fas fa-check-circle text-3xl text-green-500" : "fas fa-exclamation-circle text-3xl text-red-500";
+      document.getElementById('toast-message').textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    async function loadHistory(reset = false) {
+      if (reset) {
+        currentPage = 1;
+        hasMore = true;
+        document.getElementById('history-table').innerHTML = '';
+        historyData = [];
+      }
+
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: 20,
+        start: document.getElementById('filter-start').value || '',
+        end: document.getElementById('filter-end').value || '',
+        agent: document.getElementById('filter-agent').value,
+        type: document.getElementById('filter-type').value
+      });
+
+      try {
+        const data = await apiFetch(`/api/admin/history?${params}`);
+
+        // FIXED: Safe agent loading — no more .forEach error
+        if (reset) {
+          try {
+            // Change this endpoint to your actual agents list endpoint if different
+            const agentsRes = await apiFetch('/api/admin/agents');
+            // Safe array fallback
+            const agents = Array.isArray(agentsRes) ? agentsRes : (agentsRes.agents || agentsRes.data || agentsRes.list || []);
+            const select = document.getElementById('filter-agent');
+            select.innerHTML = '<option value="">All Agents</option>';
+            agents.forEach(a => {
+              const name = `${a.first_name || ''} ${a.last_name || ''}`.trim() || a.username || 'Unknown';
+              select.innerHTML += `<option value="${a.id}">${name}</option>`;
+            });
+          } catch (err) {
+            console.warn('Failed to load agents for filter (non-critical):', err);
+            document.getElementById('filter-agent').innerHTML = '<option value="">All Agents (loading failed)</option>';
+          }
+        }
+
+        const tbody = document.getElementById('history-table');
+        if (reset) tbody.innerHTML = '';
+
+        const logs = data.history || [];
+
+        if (logs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="p-12 text-center text-purple-300 text-xl">No history found</td></tr>';
+          hasMore = false;
+          return;
+        }
+
+        logs.forEach(log => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-white/10 border-b border-white/5';
+          tr.innerHTML = `
+            <td class="p-6">${new Date(log.timestamp).toLocaleString()}</td>
+            <td class="p-6 font-bold">${log.agent_name || 'Unknown'}</td>
+            <td class="p-6">${log.action || log.type || 'Activity'}</td>
+            <td class="p-6">${log.details || '-'}</td>
+            <td class="p-6 text-green-400 font-bold">${log.amount ? 'GHS ' + Number(log.amount).toLocaleString() : '-'}</td>
+            <td class="p-6">
+              <span class="px-4 py-2 rounded-full text-sm font-bold ${getTypeColor(log.type)}">
+                ${log.type || 'Unknown'}
+              </span>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        historyData = reset ? logs : historyData.concat(logs);
+        hasMore = logs.length === 20;
+        document.getElementById('load-more').classList.toggle('hidden', !hasMore);
+        currentPage++;
+      } catch (err) {
+        console.error('History load error:', err);
+        showToast('Failed to load history', false);
+      }
+    }
+
+    function getTypeColor(type) {
+      const colors = {
+        login: 'bg-green-500/20 text-green-300',
+        logout: 'bg-red-500/20 text-red-300',
+        momo: 'bg-blue-500/20 text-blue-300',
+        bank: 'bg-purple-500/20 text-purple-300',
+        airtime: 'bg-yellow-500/20 text-yellow-300',
+        sim: 'bg-pink-500/20 text-pink-300',
+        susu: 'bg-indigo-500/20 text-indigo-300'
+      };
+      return colors[type?.toLowerCase()] || 'bg-gray-500/20 text-gray-300';
+    }
+
+    function exportExcel() {
+      if (historyData.length === 0) return showToast('No data to export', false);
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(historyData.map(h => ({
+        'Date & Time': new Date(h.timestamp).toLocaleString(),
+        Agent: h.agent_name,
+        Action: h.action || h.type,
+        Details: h.details || '',
+        Amount: h.amount ? `GHS ${Number(h.amount).toLocaleString()}` : '',
+        Type: h.type
+      })));
+      XLSX.utils.book_append_sheet(wb, ws, 'History');
+      XLSX.writeFile(wb, `MoMo_History_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    async function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('l', 'mm', 'a4');
+      const element = document.querySelector('main > div');
+      const canvas = await html2canvas(element, { scale: 2 });
+      const img = canvas.toDataURL('image/png');
+      const imgWidth = 280;
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      doc.addImage(img, 'PNG', 10, 10, imgWidth, imgHeight);
+      doc.save(`MoMo_History_${new Date().toISOString().slice(0,10)}.pdf`);
+    }
+
+    document.getElementById('menu-btn').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('open'));
+
+    // Default dates
+    window.addEventListener('DOMContentLoaded', () => {
+      const today = new Date().toISOString().slice(0,10);
+      const lastMonth = new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0,10);
+      document.getElementById('filter-start').value = lastMonth;
+      document.getElementById('filter-end').value = today;
+      loadHistory(true);
+    });
+  </script>
+</body>
+</html>

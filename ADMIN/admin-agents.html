@@ -11,7 +11,7 @@
     .glass { backdrop-filter: blur(16px) saturate(180%); background-color: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2); }
     .sidebar { transition: transform 0.3s ease-in-out; }
     @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); }
+      .sidebar { transform: translateX(-100%); position: fixed; top: 0; left: 0; width: 80%; height: 100%; z-index: 50; }
       .sidebar.open { transform: translateX(0); }
     }
     #toast { display: none; }
@@ -20,6 +20,96 @@
     @keyframes slideOut { to { transform: translateX(100%); opacity: 0; } }
     .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
     @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    @media (max-width: 640px) {
+      .mobile-table th, .mobile-table td { font-size: 0.875rem; padding: 0.75rem 0.5rem; }
+    }
+
+    /* Sidebar Styling */
+    .sidebar {
+      padding: 30px 25px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(16px);
+      border-right: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .profile {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .profile img {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 5px solid rgba(255,255,255,0.4);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .profile h2 {
+      margin: 18px 0 8px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .profile p {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    .menu {
+      list-style: none;
+      margin-top: 20px;
+    }
+
+    .menu li {
+      margin: 12px 0;
+    }
+
+    .menu a {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border-radius: 16px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 17px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .menu a:hover,
+    .menu a.active {
+      background: rgba(255,255,255,0.25);
+      transform: translateX(10px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .menu i {
+      font-size: 20px;
+      width: 30px;
+      text-align: center;
+    }
+
+    .logout-btn {
+      margin-top: 50px;
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(220,38,38,0.4);
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 17px;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+
+    .logout-btn:hover {
+      background: rgba(220,38,38,0.6);
+      transform: translateY(-3px);
+    }
   </style>
 </head>
 <body class="text-white min-h-screen">
@@ -32,26 +122,27 @@
   <div class="flex h-screen overflow-hidden">
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar fixed md:static inset-y-0 left-0 z-40 w-80 glass shadow-2xl flex flex-col">
-      <div class="p-8 text-center border-b border-white/20">
-        <div class="w-28 h-28 bg-white/20 rounded-full mx-auto mb-4 flex items-center justify-center text-5xl font-bold">A</div>
-        <h2 class="text-3xl font-bold">Welcome Admin</h2>
-        <p class="text-purple-200 mt-2">Queen of the Shop</p>
+    <aside class="sidebar glass" id="sidebar">
+      <div class="profile">
+        <img id="admin-photo" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Admin">
+        <h2 id="admin-name">Queen of Empire</h2>
+        <p>System Administrator</p>
       </div>
-      <nav class="flex-1 p-6">
-        <ul class="space-y-4">
-          <li><a href="admin.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-tachometer-alt text-xl"></i><span class="text-xl font-medium">Overview</span></a></li>
-          <li><a href="admin-agents.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl bg-white/20 shadow-lg"><i class="fas fa-users text-xl"></i><span class="text-xl font-medium">Manage Agents</span></a></li>
-          <li><a href="admin-float.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-wallet text-xl"></i><span class="text-xl font-medium">Float Control</span></a></li>
-          <li><a href="admin-payroll.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-money-bill-wave text-xl"></i><span class="text-xl font-medium">Pay Salaries</span></a></li>
-          <li><a href="admin-reports.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-chart-bar text-xl"></i><span class="text-xl font-medium">Reports</span></a></li>
-        </ul>
-      </nav>
-      <div class="p-6 border-t border-white/20 text-center"><p class="text-sm opacity-80">© 2025 My MoMo Empire</p></div>
+      <ul class="menu">
+        <li><a href="admin.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="admin-agents.html" class="active"><i class="fas fa-users"></i> All Agents</a></li>
+        <li><a href="admin-float.html"><i class="fas fa-wallet"></i> Float Control</a></li>
+        <li><a href="admin-payroll.html"><i class="fas fa-money-bill-wave"></i> Pay Commission</a></li>
+        <li><a href="admin-branch.html"><i class="fas fa-building"></i> Branches</a></li>
+        <li><a href="admin-reports.html"><i class="fas fa-chart-bar"></i> Reports</a></li>
+      </ul>
+      <button class="logout-btn" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto p-8 md:p-12">
+    <main class="flex-1 overflow-y-auto p-4 sm:p-8 md:p-12">
       <div class="max-w-7xl mx-auto">
 
         <!-- Header -->
@@ -59,7 +150,9 @@
           <h1 class="text-5xl font-bold">Manage Agents</h1>
           <div class="flex gap-4">
             <button onclick="exportCSV()" class="bg-green-600 hover:bg-green-700 px-6 py-4 rounded-2xl font-bold"><i class="fas fa-file-csv mr-2"></i>Export CSV</button>
-            <button onclick="openAddModal()" class="bg-white/20 hover:bg-white/30 px-6 py-4 rounded-2xl font-bold"><i class="fas fa-plus mr-2"></i>Add Agent</button>
+            <a href="register.html" class="bg-white/20 hover:bg-white/30 px-6 py-4 rounded-2xl font-bold flex items-center gap-2">
+              <i class="fas fa-plus"></i> Add Agent
+            </a>
           </div>
         </div>
 
@@ -104,7 +197,6 @@
                 </tr>
               </thead>
               <tbody id="agents-table">
-                <!-- Skeleton Loader -->
                 <tr><td colspan="10" class="p-12 text-center"><div class="skeleton h-20 w-full rounded"></div></td></tr>
               </tbody>
             </table>
@@ -126,45 +218,77 @@
     </div>
   </div>
 
-  <!-- Add/Edit Agent Modal -->
-  <div id="agent-modal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
-    <div class="glass p-10 rounded-3xl max-w-md w-full">
-      <h2 id="modal-title" class="text-3xl font-bold text-center mb-8">Add New Agent</h2>
-      <form id="agent-form">
-        <input type="hidden" id="edit-id">
-        <div class="space-y-6">
-          <div class="flex gap-4">
-            <input type="text" id="first-name" placeholder="First Name" class="flex-1 px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300" required>
-            <input type="text" id="last-name" placeholder="Last Name" class="flex-1 px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300" required>
-          </div>
-          <input type="text" id="username" placeholder="Username" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300" required>
-          <input type="tel" id="phone" placeholder="Phone Number" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300" required>
-          <input type="password" id="password" placeholder="Password (leave blank to keep)" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white placeholder-purple-300">
-
-          <select id="role" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white">
-            <option value="employee">Employee</option>
-            <option value="manager">Manager</option>
-          </select>
-
-          <select id="branch_id" class="w-full px-6 py-4 rounded-2xl bg-white/10 text-white">
-            <option value="">No Branch (Optional)</option>
-          </select>
-        </div>
-        <div class="flex gap-6 mt-10">
-          <button type="submit" class="flex-1 bg-purple-600 text-white py-4 rounded-2xl font-bold hover:bg-purple-700">Save</button>
-          <button type="button" onclick="closeModal()" class="flex-1 bg-gray-500 text-white py-4 rounded-2xl">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <script>
-    const token = localStorage.getItem('token') || '';
-    let currentPage = 1;
-    let currentSort = 'name';
-    let currentOrder = 'asc';
-    let hasMore = true;
+    // Mobile menu toggle
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
 
+    // Close sidebar on outside click (mobile)
+    document.addEventListener('click', (e) => {
+      const sidebar = document.getElementById('sidebar');
+      const menuBtn = document.getElementById('menu-btn');
+      if (window.innerWidth < 768 && !sidebar.contains(e.target) && !menuBtn.contains(e.target)) {
+        sidebar.classList.remove('open');
+      }
+    });
+
+    // === Safe apiFetch (handles non-JSON responses) ===
+    const apiFetch = async (url, options = {}) => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert("Session expired. Please login again.");
+        window.location.href = '/login.html';
+        return;
+      }
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers
+      };
+
+      try {
+        const response = await fetch(url, { ...options, headers });
+
+        if (!response.ok) {
+          let errorMessage = `HTTP error: ${response.status}`;
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } else {
+            errorMessage = 'Server returned HTML instead of JSON. Check route.';
+          }
+          if (response.status === 401 || response.status === 403) {
+            alert("Session expired or access denied. Please login again.");
+            localStorage.clear();
+            window.location.href = '/login.html';
+          }
+          throw new Error(errorMessage);
+        }
+
+        // Check content type before parsing
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Server returned non-JSON response. Check route.');
+        }
+
+        return await response.json();
+      } catch (err) {
+        console.error('apiFetch error:', err);
+        showToast(`Failed to load data: ${err.message}`, false);
+        throw err; // re-throw for caller to handle
+      }
+    };
+
+    // === Logout function ===
+    function logout() {
+      localStorage.clear();
+      window.location.href = '/login.html';
+    }
+
+    // Toast notification
     function showToast(message, success = true) {
       const toast = document.getElementById('toast');
       const icon = document.getElementById('toast-icon');
@@ -175,23 +299,18 @@
       setTimeout(() => toast.classList.remove('show'), 4000);
     }
 
-    async function loadBranches() {
-      try {
-        const res = await fetch(`/api/admin/branches`, { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) throw new Error('Failed to load branches');
-        const branches = await res.json();
-        const select = document.getElementById('branch_id');
-        select.innerHTML = '<option value="">No Branch (Optional)</option>';
-        branches.forEach(b => {
-          select.innerHTML += `<option value="${b.id}">${b.name} - ${b.location}</option>`;
-        });
-      } catch (err) {
-        console.error("Failed to load branches:", err);
-      }
-    }
+    // Load agents table
+    let currentPage = 1;
+    let currentSort = 'name';
+    let currentOrder = 'asc';
+    let hasMore = true;
 
     async function loadAgents(reset = false) {
-      if (reset) { currentPage = 1; hasMore = true; document.getElementById('agents-table').innerHTML = ''; }
+      if (reset) {
+        currentPage = 1;
+        hasMore = true;
+        document.getElementById('agents-table').innerHTML = '';
+      }
       if (!hasMore && !reset) return;
 
       const search = document.getElementById('search-agent').value;
@@ -207,9 +326,7 @@
       });
 
       try {
-        const res = await fetch(`/api/admin/agents?${params}`, { headers: { Authorization: `Bearer ${token}` } });
-        if (!res.ok) throw new Error('Failed to fetch agents');
-        const data = await res.json();
+        const data = await apiFetch(`/api/admin/agents?${params.toString()}`);
 
         if (reset) updateStats(data.stats || {});
 
@@ -227,8 +344,6 @@
           tr.className = 'hover:bg-white/10';
           tr.innerHTML = `
             <td class="p-6"><input type="checkbox" class="agent-checkbox" value="${agent.id}"></td>
-            
-            <!-- Staff Name + Avatar -->
             <td class="p-6 font-bold text-xl flex items-center gap-4">
               <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl">
                 ${agent.first_name[0]}${agent.last_name ? agent.last_name[0] : ''}
@@ -238,21 +353,13 @@
                 <span class="block text-sm opacity-80">@${agent.username}</span>
               </div>
             </td>
-            
-            <!-- Role -->
             <td class="p-6">
               <span class="px-5 py-2 rounded-full text-sm font-bold ${agent.role === 'manager' ? 'bg-purple-600/30 text-purple-300' : 'bg-blue-600/30 text-blue-300'}">
                 ${agent.role === 'manager' ? 'Manager' : 'Employee'}
               </span>
             </td>
-            
-            <!-- Phone -->
             <td class="p-6">${agent.phone || 'N/A'}</td>
-            
-            <!-- Username -->
             <td class="p-6">@${agent.username}</td>
-            
-            <!-- Branch -->
             <td class="p-6">
               ${agent.branch_name ? 
                 `<span class="font-bold">${agent.branch_name}</span>
@@ -260,25 +367,17 @@
                 : '<span class="text-gray-400">No Branch Assigned</span>'
               }
             </td>
-            
-            <!-- Float Balance -->
             <td class="p-6 text-green-400 font-bold text-xl">
               ${agent.role === 'employee' ? `GHS ${Number(agent.balance || 0).toLocaleString()}` : '—'}
             </td>
-            
-            <!-- Today's Sales -->
             <td class="p-6 text-blue-400 font-bold">
               ${agent.role === 'employee' ? `GHS ${Number(agent.today_sales || 0).toLocaleString()}` : '—'}
             </td>
-            
-            <!-- Status -->
             <td class="p-6">
-              <span class="px-6 py-2 rounded-full font-bold ${agent.status === 'active' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}">
-                ${agent.status || 'active'}
+              <span class="px-6 py-2 rounded-full font-bold ${agent.is_active ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}">
+                ${agent.is_active ? 'Active' : 'Inactive'}
               </span>
             </td>
-            
-            <!-- Actions -->
             <td class="p-6">
               <button onclick="editAgent(${agent.id})" class="mr-4 text-blue-400 hover:text-blue-200 font-bold">Edit</button>
               <button onclick="deleteAgent(${agent.id})" class="text-red-400 hover:text-red-200 font-bold">Delete</button>
@@ -296,6 +395,7 @@
       }
     }
 
+    // Update stats
     function updateStats(stats) {
       document.getElementById('stat-total').textContent = stats.total || 0;
       document.getElementById('stat-active').textContent = stats.active || 0;
@@ -303,6 +403,7 @@
       document.getElementById('stat-float').textContent = `GHS ${(stats.totalFloat || 0).toLocaleString()}`;
     }
 
+    // Sort table
     function sortTable(column) {
       if (currentSort === column) {
         currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
@@ -313,10 +414,11 @@
       loadAgents(true);
     }
 
+    // Export CSV
     async function exportCSV() {
       try {
-        const res = await fetch(`/api/admin/agents?export=csv`, { headers: { Authorization: `Bearer ${token}` } });
-        const blob = await res.blob();
+        const data = await apiFetch(`/api/admin/agents?export=csv`);
+        const blob = await data.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -327,21 +429,23 @@
       }
     }
 
-    function bulkDelete() {
+    // Bulk delete
+    async function bulkDelete() {
       const selected = Array.from(document.querySelectorAll('.agent-checkbox:checked')).map(cb => cb.value);
       if (selected.length === 0) return showToast("No agents selected", false);
       if (!confirm(`Delete ${selected.length} agents permanently?`)) return;
 
-      Promise.all(selected.map(id => fetch(`/api/admin/agents/${id}`, { 
-        method: 'DELETE', 
-        headers: { Authorization: `Bearer ${token}` } 
-      })))
-        .then(() => { showToast("Agents deleted"); loadAgents(true); })
-        .catch(() => showToast("Bulk delete failed", false));
+      try {
+        await Promise.all(selected.map(id => apiFetch(`/api/admin/agents/${id}`, { method: 'DELETE' })));
+        showToast("Agents deleted");
+        loadAgents(true);
+      } catch (err) {
+        showToast("Bulk delete failed", false);
+      }
     }
 
     // Checkbox logic
-    document.getElementById('select-all').addEventListener('change', (e) => {
+    document.getElementById('select-all').addEventListener('change', e => {
       document.querySelectorAll('.agent-checkbox').forEach(cb => cb.checked = e.target.checked);
       document.getElementById('bulk-delete-btn').classList.toggle('hidden', !e.target.checked);
     });
@@ -350,99 +454,10 @@
       document.getElementById('bulk-delete-btn').classList.toggle('hidden', !anyChecked);
     });
 
-    // Modal Functions
-    function openAddModal() {
-      document.getElementById('modal-title').textContent = 'Add New Agent';
-      document.getElementById('agent-form').reset();
-      document.getElementById('edit-id').value = '';
-      document.getElementById('role').value = 'employee';
-      loadBranches();
-      document.getElementById('agent-modal').classList.remove('hidden');
-    }
-
-    async function editAgent(id) {
-      try {
-        const res = await fetch(`/api/admin/agents/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-        const agent = await res.json();
-
-        document.getElementById('modal-title').textContent = 'Edit Agent';
-        document.getElementById('edit-id').value = agent.id;
-        document.getElementById('first-name').value = agent.first_name || '';
-        document.getElementById('last-name').value = agent.last_name || '';
-        document.getElementById('username').value = agent.username || '';
-        document.getElementById('phone').value = agent.phone || '';
-        document.getElementById('role').value = agent.role || 'employee';
-        await loadBranches();
-        document.getElementById('branch_id').value = agent.branch_id || '';
-        document.getElementById('agent-modal').classList.remove('hidden');
-      } catch (err) {
-        showToast("Failed to load agent", false);
-      }
-    }
-
-    async function deleteAgent(id) {
-      if (!confirm('Delete this agent permanently?')) return;
-      try {
-        await fetch(`/api/admin/agents/${id}`, { 
-          method: 'DELETE', 
-          headers: { Authorization: `Bearer ${token}` } 
-        });
-        showToast("Agent deleted");
-        loadAgents(true);
-      } catch (err) {
-        showToast("Delete failed", false);
-      }
-    }
-
-    function closeModal() {
-      document.getElementById('agent-modal').classList.add('hidden');
-    }
-
-    // Form Submit
-    document.getElementById('agent-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = document.getElementById('edit-id').value;
-      const formData = {
-        first_name: document.getElementById('first-name').value,
-        last_name: document.getElementById('last-name').value,
-        username: document.getElementById('username').value,
-        phone: document.getElementById('phone').value,
-        password: document.getElementById('password').value,
-        branch_id: document.getElementById('branch_id').value || null,
-        role: document.getElementById('role').value
-      };
-
-      const method = id ? 'PUT' : 'POST';
-      const url = id ? `/api/admin/agents/${id}` : '/api/admin/agents';
-
-      try {
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify(formData)
-        });
-
-        if (!res.ok) throw new Error('Operation failed');
-        
-        closeModal();
-        showToast(id ? "Agent updated!" : "Agent created!");
-        loadAgents(true);
-      } catch (err) {
-        showToast("Operation failed", false);
-      }
+    // Load on page ready
+    window.addEventListener('DOMContentLoaded', () => {
+      loadAgents(true);
     });
-
-    // Real-time search & filter
-    document.getElementById('search-agent').addEventListener('keyup', () => loadAgents(true));
-    document.getElementById('status-filter').addEventListener('change', () => loadAgents(true));
-
-    // Mobile menu
-    document.getElementById('menu-btn').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('open');
-    });
-
-    // Load on start
-    loadAgents(true);
   </script>
 </body>
 </html>

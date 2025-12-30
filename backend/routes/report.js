@@ -1,20 +1,42 @@
-// backend/routes/report.js
+// backend/routes/report.js — UPDATED TO USE COOKIES (httpOnly authToken)
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const jwt = require('jsonwebtoken');
 
-// Promisify db.query for async/await
-const query = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.query(sql, params, (err, results) => {
-      if (err) {
-        console.error('Database Query Error:', err);
-        return reject(err);
-      }
-      resolve(results);
-    });
+// Middleware: Read token from httpOnly cookie (no header needed)
+const authenticateToken = (req, res, next) => {
+  const token = req.cookies.authToken; // ← Reads from cookie
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Not authenticated' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret', (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ success: false, message: 'Invalid token' });
+    }
+    req.user = decoded;
+    next();
   });
 };
+
+// Optional: Admin check (if reports are admin-only)
+const requireAdmin = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: 'Not authenticated' });
+  }
+
+  const role = (req.user.role || '').toString().toLowerCase().trim();
+  if (['admin', 'owner', 'superadmin', 'queen'].includes(role)) {
+    return next();
+  }
+
+  return res.status(403).json({ success: false, message: 'Admin access required' });
+};
+
+// Apply auth (and optionally admin check) to all routes
+router.use(authenticateToken, requireAdmin); // ← Remove requireAdmin if reports are public
 
 // Helper: Date range
 const getDateRange = (type, customStart, customEnd) => {
@@ -44,7 +66,12 @@ router.get('/', async (req, res) => {
   const { start: startDate, end: endDate } = getDateRange(type, start, end);
 
   try {
-    const branches = await query(`SELECT id, name FROM branches ORDER BY name`);
+    const branches = await new Promise((resolve, reject) => {
+      db.query(`SELECT id, name FROM branches ORDER BY name`, (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
+      });
+    });
 
     const branchFilter = (branch_id && branch_id !== 'all') ? ' AND u.branch_id = ? ' : '';
     const branchParam = (branch_id && branch_id !== 'all') ? branch_id : null;
@@ -53,79 +80,90 @@ router.get('/', async (req, res) => {
       ? [startDate, endDate, branchParam, startDate, endDate, branchParam, startDate, endDate, branchParam, startDate, endDate, branchParam, startDate, endDate, branchParam]
       : [startDate, endDate, startDate, endDate, startDate, endDate, startDate, endDate, startDate, endDate];
 
-    const transactions = await query(`
-      SELECT 
-        DATE(mt.created_at) as date,
-        CONCAT(u.first_name, ' ', u.last_name) as agent_name,
-        'momo_deposit' as service_type,
-        mt.amount,
-        mt.type as sub_type,
-        mt.network,
-        u.branch_id
-      FROM momo_transactions mt
-      JOIN users u ON mt.agent_id = u.id
-      WHERE DATE(mt.created_at) BETWEEN ? AND ? AND mt.type = 'deposit' ${branchFilter}
+    const transactions = await new Promise((resolve, reject) => {
+      db.query(`
+        SELECT 
+          DATE(mt.created_at) as date,
+          CONCAT(u.first_name, ' ', u.last_name) as agent_name,
+          'momo_deposit' as service_type,
+          mt.amount,
+          mt.type as sub_type,
+          mt.network,
+          u.branch_id
+        FROM momo_transactions mt
+        JOIN users u ON mt.agent_id = u.id
+        WHERE DATE(mt.created_at) BETWEEN ? AND ? AND mt.type = 'deposit' ${branchFilter}
 
-      UNION ALL
+        UNION ALL
 
-      SELECT 
-        DATE(mt.created_at) as date,
-        CONCAT(u.first_name, ' ', u.last_name) as agent_name,
-        'momo_withdraw' as service_type,
-        mt.amount,
-        mt.type as sub_type,
-        mt.network,
-        u.branch_id
-      FROM momo_transactions mt
-      JOIN users u ON mt.agent_id = u.id
-      WHERE DATE(mt.created_at) BETWEEN ? AND ? AND mt.type = 'withdraw' ${branchFilter}
+        SELECT 
+          DATE(mt.created_at) as date,
+          CONCAT(u.first_name, ' ', u.last_name) as agent_name,
+          'momo_withdraw' as service_type,
+          mt.amount,
+          mt.type as sub_type,
+          mt.network,
+          u.branch_id
+        FROM momo_transactions mt
+        JOIN users u ON mt.agent_id = u.id
+        WHERE DATE(mt.created_at) BETWEEN ? AND ? AND mt.type = 'withdraw' ${branchFilter}
 
-      UNION ALL
+        UNION ALL
 
-      SELECT 
-        DATE(bt.created_at) as date,
-        CONCAT(u.first_name, ' ', u.last_name) as agent_name,
-        CONCAT('bank_', LOWER(bt.type)) as service_type,
-        bt.amount,
-        bt.type as sub_type,
-        bt.bank_name as network,
-        u.branch_id
-      FROM bank_transactions bt
-      JOIN users u ON bt.agent_id = u.id
-      WHERE DATE(bt.created_at) BETWEEN ? AND ? ${branchFilter}
+        SELECT 
+          DATE(bt.created_at) as date,
+          CONCAT(u.first_name, ' ', u.last_name) as agent_name,
+          CONCAT('bank_', LOWER(bt.type)) as service_type,
+          bt.amount,
+          bt.type as sub_type,
+          bt.bank_name as network,
+          u.branch_id
+        FROM bank_transactions bt
+        JOIN users u ON bt.agent_id = u.id
+        WHERE DATE(bt.created_at) BETWEEN ? AND ? ${branchFilter}
 
-      UNION ALL
+        UNION ALL
 
-      SELECT 
-        DATE(al.created_at) as date,
-        CONCAT(u.first_name, ' ', u.last_name) as agent_name,
-        'airtime' as service_type,
-        al.amount,
-        'airtime' as sub_type,
-        al.network,
-        u.branch_id
-      FROM airtime_logs al
-      JOIN users u ON al.employee_id = u.id
-      WHERE DATE(al.created_at) BETWEEN ? AND ? ${branchFilter}
+        SELECT 
+          DATE(al.created_at) as date,
+          CONCAT(u.first_name, ' ', u.last_name) as agent_name,
+          'airtime' as service_type,
+          al.amount,
+          'airtime' as sub_type,
+          al.network,
+          u.branch_id
+        FROM airtime_logs al
+        JOIN users u ON al.employee_id = u.id
+        WHERE DATE(al.created_at) BETWEEN ? AND ? ${branchFilter}
 
-      UNION ALL
+        UNION ALL
 
-      SELECT 
-        DATE(ss.created_at) as date,
-        CONCAT(u.first_name, ' ', u.last_name) as agent_name,
-        'sim_sale' as service_type,
-        ss.amount,
-        'sim' as sub_type,
-        ss.network,
-        u.branch_id
-      FROM sim_sales ss
-      JOIN users u ON ss.employee_id = u.id
-      WHERE DATE(ss.created_at) BETWEEN ? AND ? ${branchFilter}
+        SELECT 
+          DATE(ss.created_at) as date,
+          CONCAT(u.first_name, ' ', u.last_name) as agent_name,
+          'sim_sale' as service_type,
+          ss.amount,
+          'sim' as sub_type,
+          ss.network,
+          u.branch_id
+        FROM sim_sales ss
+        JOIN users u ON ss.employee_id = u.id
+        WHERE DATE(ss.created_at) BETWEEN ? AND ? ${branchFilter}
 
-      ORDER BY date DESC
-    `, params);
+        ORDER BY date DESC
+      `, params, (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
+      });
+    });
 
-    const rules = await query(`SELECT service_type, rate_percent FROM commission_rules WHERE branch_id IS NULL OR branch_id = 0`);
+    const rules = await new Promise((resolve, reject) => {
+      db.query(`SELECT service_type, rate_percent FROM commission_rules WHERE branch_id IS NULL OR branch_id = 0`, (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
+      });
+    });
+
     const rulesMap = { default: 1.50 };
     rules.forEach(r => {
       rulesMap[r.service_type] = parseFloat(r.rate_percent);
@@ -152,14 +190,19 @@ router.get('/', async (req, res) => {
 
     const floatParams = branchParam ? [startDate, endDate, branchParam] : [startDate, endDate];
     const floatFilter = branchParam ? ' AND u.branch_id = ?' : '';
-    const floatData = await query(`
-      SELECT 
-        COALESCE(SUM(CASE WHEN type='deposit' THEN amount ELSE 0 END), 0) as deposits,
-        COALESCE(SUM(CASE WHEN type='withdraw' THEN amount ELSE 0 END), 0) as withdrawals
-      FROM momo_transactions mt
-      JOIN users u ON mt.agent_id = u.id
-      WHERE DATE(mt.created_at) BETWEEN ? AND ? ${floatFilter}
-    `, floatParams);
+    const floatData = await new Promise((resolve, reject) => {
+      db.query(`
+        SELECT 
+          COALESCE(SUM(CASE WHEN type='deposit' THEN amount ELSE 0 END), 0) as deposits,
+          COALESCE(SUM(CASE WHEN type='withdraw' THEN amount ELSE 0 END), 0) as withdrawals
+        FROM momo_transactions mt
+        JOIN users u ON mt.agent_id = u.id
+        WHERE DATE(mt.created_at) BETWEEN ? AND ? ${floatFilter}
+      `, floatParams, (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
+      });
+    });
 
     const float_change = floatData[0].deposits - floatData[0].withdrawals;
 

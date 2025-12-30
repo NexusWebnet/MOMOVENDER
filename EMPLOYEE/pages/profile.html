@@ -1,105 +1,526 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MoMo Banking Profile</title>
-    <link rel="stylesheet" href="../css/profile.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>My Profile — MIB MoMo Vendor</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    
+    body {
+      font-family:"Poppins",sans-serif;
+      min-height:100vh;
+      background: url('../../ASSETS/images/logo.jpeg') center/cover no-repeat fixed;
+      position:relative;
+      color:#333;
+    }
+    body::before {
+      content:'';
+      position:absolute;
+      top:0; left:0; right:0; bottom:0;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(10px);
+      z-index:-1;
+    }
+
+    .container {
+      max-width:900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .profile-header {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(15px);
+      border-radius: 25px;
+      padding: 40px 30px;
+      text-align: center;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    .avatar-container {
+      position:relative;
+      display:inline-block;
+      margin-bottom:20px;
+    }
+
+    .avatar {
+      width:140px;
+      height:140px;
+      border-radius:50%;
+      object-fit:cover;
+      border: 6px solid rgba(255,255,255,0.9);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .user-name {
+      font-size:28px;
+      font-weight:800;
+      color:#4a148c;
+      margin-bottom:8px;
+    }
+
+    .user-role {
+      font-size:18px;
+      color:#6a1b9a;
+      font-weight:600;
+      margin-bottom:5px;
+    }
+
+    .branch-info {
+      font-size:16px;
+      color:#555;
+      font-weight:500;
+    }
+
+    .info-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(15px);
+      border-radius: 25px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    .section-title {
+      font-size:22px;
+      font-weight:700;
+      color:#4a148c;
+      margin-bottom:25px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .edit-btn {
+      background:#ffb300;
+      color:black;
+      border:none;
+      padding:10px 16px;
+      border-radius:50px;
+      font-weight:bold;
+      cursor:pointer;
+      transition:all 0.3s;
+    }
+
+    .edit-btn:hover {
+      background:#ffa000;
+      transform:translateY(-2px);
+    }
+
+    .info-grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap:20px;
+    }
+
+    .info-item {
+      display:flex;
+      flex-direction:column;
+    }
+
+    .info-label {
+      font-size:14px;
+      color:#666;
+      margin-bottom:8px;
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:0.5px;
+    }
+
+    .info-value {
+      font-size:18px;
+      font-weight:600;
+      color:#333;
+      padding:12px 16px;
+      background:rgba(106,27,154,0.08);
+      border-radius:12px;
+      border:1px solid rgba(106,27,154,0.2);
+    }
+
+    .info-value input {
+      width:100%;
+      padding:12px 16px;
+      border:2px solid #6a1b9a;
+      border-radius:12px;
+      font-size:18px;
+      background:white;
+    }
+
+    .password-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(15px);
+      border-radius: 25px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    .form-group {
+      margin-bottom:20px;
+    }
+
+    .password-input {
+      position:relative;
+    }
+
+    .password-input input {
+      width:100%;
+      padding:14px 50px 14px 16px;
+      border:1px solid rgba(0,0,0,0.1);
+      border-radius:12px;
+      font-size:16px;
+    }
+
+    .toggle-password {
+      position:absolute;
+      right:16px;
+      top:50%;
+      transform:translateY(-50%);
+      cursor:pointer;
+      color:#666;
+      font-size:18px;
+    }
+
+    .save-btn {
+      background:#6a1b9a;
+      color:white;
+      border:none;
+      padding:16px 30px;
+      border-radius:50px;
+      font-size:17px;
+      font-weight:bold;
+      cursor:pointer;
+      width:100%;
+      margin-top:20px;
+      transition:all 0.3s;
+      box-shadow:0 6px 20px rgba(106,27,154,0.3);
+    }
+
+    .save-btn:hover {
+      background:#8e24aa;
+      transform:translateY(-3px);
+    }
+
+    .logout-btn {
+      display:block;
+      width:100%;
+      padding:16px;
+      background:#e74c3c;
+      color:white;
+      border:none;
+      border-radius:50px;
+      font-size:18px;
+      font-weight:bold;
+      cursor:pointer;
+      text-align:center;
+      margin:30px 0;
+      transition:all 0.3s;
+      box-shadow:0 6px 20px rgba(231,76,60,0.3);
+    }
+
+    .logout-btn:hover {
+      background:#c0392b;
+      transform:translateY(-3px);
+    }
+
+    .bottom-nav {
+      position:fixed;
+      bottom:0;
+      left:0;
+      right:0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      display:flex;
+      justify-content:space-around;
+      padding:12px 0;
+      box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+      z-index:1000;
+      display:none;
+    }
+
+    .nav-item {
+      text-align:center;
+      color:#888;
+      font-size:12px;
+      transition:all 0.3s;
+    }
+
+    .nav-item i {
+      font-size:24px;
+      display:block;
+      margin-bottom:5px;
+    }
+
+    .nav-item.active {
+      color:#6a1b9a;
+      font-weight:bold;
+    }
+
+    @media (max-width:992px) {
+      .container { padding:15px; }
+      .profile-header { padding:30px 20px; }
+      .avatar { width:120px; height:120px; }
+      .info-grid { grid-template-columns:1fr; }
+      .bottom-nav { display:flex; }
+    }
+
+    @media (max-width:576px) {
+      .user-name { font-size:24px; }
+      .user-role { font-size:16px; }
+      .section-title { font-size:20px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <div class="profile">
-                <h1> Nana!</h1>
-            <img src="../../ASSETS/images/profile.jpg" alt="User Avatar" class="avatar">
-            </div>
-            <div class="search-section">
-           
-             </div>
 
-        </header>
+  <div class="container">
+    <!-- PROFILE HEADER -->
+    <div class="profile-header">
+      <div class="avatar-container">
+        <img src="../../ASSETS/images/profile.jpg" alt="Profile" class="avatar" id="profileAvatar">
+      </div>
+      <h1 class="user-name" id="displayName">Loading...</h1>
+      <p class="user-role" id="displayRole">Loading...</p>
+      <p class="branch-info" id="displayBranch">Loading...</p>
+    </div>
 
-        
-        <section class="personal-info">
-            <div class="section-header">
-                <h3>Personal Information</h3>
-            </div>
-          <section class="personal-info">
-    <div class="section-header">
+    <!-- PERSONAL INFO -->
+    <div class="info-card">
+      <div class="section-title">
         <h3>Personal Information</h3>
+        <button class="edit-btn" id="editBtn">Edit</button>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">First Name</span>
+          <div class="info-value" id="firstNameValue">Loading...</div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Last Name</span>
+          <div class="info-value" id="lastNameValue">Loading...</div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Username</span>
+          <div class="info-value" id="usernameValue">Loading...</div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Phone Number</span>
+          <div class="info-value" id="phoneValue">Loading...</div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Email</span>
+          <div class="info-value" id="emailValue">Loading...</div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Branch</span>
+          <div class="info-value" id="branchValue">Loading...</div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Role</span>
+          <div class="info-value" id="roleValue">Loading...</div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Joined</span>
+          <div class="info-value" id="joinDateValue">Loading...</div>
+        </div>
+      </div>
     </div>
 
-    <div class="form-group">
-        <label>First Name</label>
-        <input type="text" id="first_name" placeholder="Enter first name">
+    <!-- CHANGE PASSWORD -->
+    <div class="password-card">
+      <div class="section-title">
+        <h3>Change Password</h3>
+      </div>
+
+      <div class="form-group">
+        <div class="password-input">
+          <input type="password" id="currentPassword" placeholder="Current Password">
+          <i class="fas fa-eye toggle-password" onclick="togglePass('currentPassword')"></i>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="password-input">
+          <input type="password" id="newPassword" placeholder="New Password">
+          <i class="fas fa-eye toggle-password" onclick="togglePass('newPassword')"></i>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="password-input">
+          <input type="password" id="confirmPassword" placeholder="Confirm New Password">
+          <i class="fas fa-eye toggle-password" onclick="togglePass('confirmPassword')"></i>
+        </div>
+      </div>
+
+      <button class="save-btn" onclick="changePassword()">Update Password</button>
     </div>
 
-    <div class="form-group">
-        <label>Last Name</label>
-        <input type="text" id="last_name" placeholder="Enter last name">
-    </div>
+    <!-- LOGOUT -->
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
 
-    <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="email" placeholder="Enter email">
-    </div>
+  <!-- BOTTOM NAVIGATION (MOBILE) -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <i class="fas fa-home"></i>
+      <span>Dashboard</span>
+    </a>
+    <a href="transactions.html" class="nav-item">
+      <i class="fas fa-exchange-alt"></i>
+      <span>Transactions</span>
+    </a>
+    <a href="filter_transaction.html" class="nav-item">
+      <i class="fas fa-history"></i>
+      <span>History</span>
+    </a>
+    <a href="profile.html" class="nav-item active">
+      <i class="fas fa-user"></i>
+      <span>Profile</span>
+    </a>
+  </nav>
 
-    <div class="form-group">
-        <label>Phone Number</label>
-        <input type="tel" id="phone" placeholder="Enter phone number">
-    </div>
+  <script>
+    // SAFE API FETCH WITH TOKEN & 401 HANDLING
+    async function apiFetch(url, options = {}) {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Session expired. Please login again.');
+        window.location.href = '/login.html';
+        return null;
+      }
 
-    <button class="save-profile-btn">Save Profile</button>
-</section>
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers
+      };
 
+      try {
+        const res = await fetch(url, { ...options, headers });
+        if (res.status === 401) {
+          alert('Session expired. Please login again.');
+          localStorage.clear();
+          window.location.href = '/login.html';
+          return null;
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } catch (err) {
+        console.error('API Error:', err);
+        alert('Network error or server issue');
+        return null;
+      }
+    }
 
-<section class="security-settings">
-    <div class="section-header">
-        <h3>Security Settings</h3>
-    </div>
+    // Load profile data
+    async function loadProfile() {
+      const data = await apiFetch('/api/profile');
+      if (!data || !data.success) return;
 
-    <div class="form-group">
-        <label>Current Password</label>
-        <input type="password" id="currentPassword" placeholder="Enter current password">
-    </div>
+      const u = data.user;
+      localStorage.setItem('user', JSON.stringify(u)); // Update cached user
 
-    <div class="form-group">
-        <label>New Password</label>
-        <input type="password" id="newPassword" placeholder="Enter new password">
-    </div>
+      document.getElementById('displayName').textContent = `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'User';
+      document.getElementById('firstNameValue').textContent = u.first_name || 'Not set';
+      document.getElementById('lastNameValue').textContent = u.last_name || 'Not set';
+      document.getElementById('usernameValue').textContent = u.username || 'Not set';
+      document.getElementById('phoneValue').textContent = u.phone || 'Not set';
+      document.getElementById('emailValue').textContent = u.email || 'Not set';
+      document.getElementById('branchValue').textContent = u.branch_name || 'No Branch';
+      document.getElementById('roleValue').textContent = u.role || 'Employee';
+      document.getElementById('displayRole').textContent = u.role || 'Employee';
+      document.getElementById('displayBranch').textContent = u.branch_name || 'Main Branch - Accra';
+      document.getElementById('joinDateValue').textContent = new Date(u.created_at || Date.now()).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+    }
 
-    <div class="form-group">
-        <label>Confirm New Password</label>
-        <input type="password" id="confirmPassword" placeholder="Confirm new password">
-    </div>
+    // Edit mode
+    let editing = false;
+    document.getElementById('editBtn').onclick = async function() {
+      editing = !editing;
+      this.textContent = editing ? 'Save' : 'Edit';
 
-    <button class="change-password-btn">Change Password</button>
-</section>
+      const fields = ['firstName', 'lastName', 'phone'];
+      if (editing) {
+        fields.forEach(field => {
+          const el = document.getElementById(field + 'Value');
+          el.innerHTML = `<input type="text" value="${el.textContent}" id="${field}Input" class="w-full">`;
+        });
+      } else {
+        let updates = {};
+        for (const field of fields) {
+          const input = document.getElementById(field + 'Input');
+          if (input) {
+            const value = input.value.trim();
+            document.getElementById(field + 'Value').textContent = value || 'Not set';
+            if (value !== input.defaultValue) updates[field] = value;
+          }
+        }
+        if (Object.keys(updates).length > 0) {
+          const res = await apiFetch('/api/profile', {
+            method: 'PUT',
+            body: JSON.stringify(updates)
+          });
+          if (res && res.success) {
+            alert('Profile updated successfully!');
+            loadProfile();
+          } else {
+            alert('Update failed');
+          }
+        }
+      }
+    };
 
+    // Change password
+    async function changePassword() {
+      const current = document.getElementById('currentPassword').value;
+      const newPass = document.getElementById('newPassword').value;
+      const confirm = document.getElementById('confirmPassword').value;
 
-        <button class="logout-btn">Logout</button>
-    </div>
+      if (!current || !newPass || !confirm) return alert('Please fill all fields');
+      if (newPass !== confirm) return alert('New passwords do not match');
+      if (newPass.length < 6) return alert('New password too short');
 
-    <nav class="bottom-nav">
-        <a href="index.html" class="nav-item active">
-            <i class="fas fa-home"></i>
-            <span>Dashboard</span>
-        </a>
-        <a href="transactions.html" class="nav-item">
-            <i class="fas fa-exchange-alt"></i>
-            <span>Transaction</span>
-        </a>
-        <a href="filter_transaction.html" class="nav-item">
-            <i class="fas fa-history"></i>
-            <span>History</span>
-        </a>
-        <a href="profile.html" class="nav-item">
-            <i class="fas fa-user"></i>
-            <span>Profile</span>
-        </a>
-    </nav>
+      const res = await apiFetch('/api/profile/password', {
+        method: 'PUT',
+        body: JSON.stringify({ currentPassword: current, newPassword: newPass })
+      });
 
-    <script src="../js/profile.js"></script>
+      if (res && res.success) {
+        alert('Password changed successfully!');
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+      } else {
+        alert(res?.message || 'Failed to change password');
+      }
+    }
+
+    function togglePass(id) {
+      const field = document.getElementById(id);
+      const icon = field.nextElementSibling;
+      if (field.type === 'password') {
+        field.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        field.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        localStorage.clear();
+        window.location.href = '/login.html';
+      }
+    }
+
+    // Load on start
+    window.addEventListener('DOMContentLoaded', loadProfile);
+  </script>
 </body>
 </html>

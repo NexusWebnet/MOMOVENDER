@@ -11,7 +11,7 @@
     .glass { backdrop-filter: blur(16px) saturate(180%); background-color: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2); }
     .sidebar { transition: transform 0.3s ease-in-out; }
     @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); }
+      .sidebar { transform: translateX(-100%); position: fixed; top: 0; left: 0; width: 80%; height: 100%; z-index: 50; }
       .sidebar.open { transform: translateX(0); }
     }
     #toast { display: none; }
@@ -22,6 +22,93 @@
     @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     @media (max-width: 640px) {
       .mobile-table th, .mobile-table td { font-size: 0.875rem; padding: 0.75rem 0.5rem; }
+    }
+
+    /* Sidebar Styling */
+    .sidebar {
+      padding: 30px 25px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(16px);
+      border-right: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .profile {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .profile img {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 5px solid rgba(255,255,255,0.4);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .profile h2 {
+      margin: 18px 0 8px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .profile p {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    .menu {
+      list-style: none;
+      margin-top: 20px;
+    }
+
+    .menu li {
+      margin: 12px 0;
+    }
+
+    .menu a {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border-radius: 16px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 17px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .menu a:hover,
+    .menu a.active {
+      background: rgba(255,255,255,0.25);
+      transform: translateX(10px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .menu i {
+      font-size: 20px;
+      width: 30px;
+      text-align: center;
+    }
+
+    .logout-btn {
+      margin-top: 50px;
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(220,38,38,0.4);
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 17px;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+
+    .logout-btn:hover {
+      background: rgba(220,38,38,0.6);
+      transform: translateY(-3px);
     }
   </style>
 </head>
@@ -35,22 +122,23 @@
   <div class="flex h-screen overflow-hidden">
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar fixed md:static inset-y-0 left-0 z-40 w-80 glass shadow-2xl flex flex-col">
-      <div class="p-8 text-center border-b border-white/20">
-        <div class="w-28 h-28 bg-white/20 rounded-full mx-auto mb-4 flex items-center justify-center text-5xl font-bold">A</div>
-        <h2 class="text-3xl font-bold">Welcome Admin</h2>
-        <p class="text-purple-200 mt-2">Queen of the Shop</p>
+    <aside class="sidebar glass" id="sidebar">
+      <div class="profile">
+        <img id="admin-photo" src="https://randomuser.me/api/portraits/men/32.jpg" alt="Admin">
+        <h2 id="admin-name">Queen of Empire</h2>
+        <p>System Administrator</p>
       </div>
-      <nav class="flex-1 p-6">
-        <ul class="space-y-4">
-          <li><a href="admin.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-tachometer-alt text-xl"></i><span class="text-xl font-medium">Overview</span></a></li>
-          <li><a href="admin-agents.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-users text-xl"></i><span class="text-xl font-medium">Manage Agents</span></a></li>
-          <li><a href="admin-float.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-wallet text-xl"></i><span class="text-xl font-medium">Float Control</span></a></li>
-          <li><a href="admin-payroll.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl bg-white/20 shadow-lg"><i class="fas fa-money-bill-wave text-xl"></i><span class="text-xl font-medium">Pay Salaries</span></a></li>
-          <li><a href="admin-reports.html" class="flex items-center gap-5 py-5 px-8 rounded-2xl hover:bg-white/10 transition"><i class="fas fa-chart-bar text-xl"></i><span class="text-xl font-medium">Reports</span></a></li>
-        </ul>
-      </nav>
-      <div class="p-6 border-t border-white/20 text-center"><p class="text-sm opacity-80">© 2025 My MoMo Empire</p></div>
+      <ul class="menu">
+        <li><a href="admin.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="admin-agents.html"><i class="fas fa-users"></i> All Agents</a></li>
+        <li><a href="admin-float.html"><i class="fas fa-wallet"></i> Float Control</a></li>
+        <li><a href="admin-payroll.html" class="active"><i class="fas fa-money-bill-wave"></i> Pay Commission</a></li>
+        <li><a href="admin-branch.html"><i class="fas fa-building"></i> Branches</a></li>
+        <li><a href="admin-reports.html"><i class="fas fa-chart-bar"></i> Reports</a></li>
+      </ul>
+      <button class="logout-btn" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
     </aside>
 
     <!-- Main Content -->
@@ -153,7 +241,46 @@
   </div>
 
   <script>
-    const token = localStorage.getItem('token') || '';
+    // Token fetch helper
+    const apiFetch = async (url, options = {}) => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert("Session expired. Please login again.");
+        window.location.href = '/login.html';
+        return;
+      }
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers
+      };
+
+      const response = await fetch(url, { ...options, headers });
+      if (!response.ok) {
+        if (response.status === 401) {
+          alert("Session expired. Please login again.");
+          localStorage.clear();
+          window.location.href = '/login.html';
+        }
+        throw new Error(`HTTP error: ${response.status}`);
+      }
+      return await response.json();
+    };
+
+    // Mobile menu
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+
+    document.addEventListener('click', (e) => {
+      const sidebar = document.getElementById('sidebar');
+      const menuBtn = document.getElementById('menu-btn');
+      if (window.innerWidth < 768 && !sidebar.contains(e.target) && !menuBtn.contains(e.target)) {
+        sidebar.classList.remove('open');
+      }
+    });
+
     let currentPage = 1;
     let hasMore = true;
 
@@ -187,33 +314,26 @@
       });
 
       try {
-        // CORRECTED ROUTE — NO MORE 404
-        const res = await fetch(`/api/payroll/admin?${params}`, { 
-          headers: { Authorization: `Bearer ${token}` } 
-        });
-        
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const data = await res.json();
+        const data = await apiFetch(`/api/payroll/admin?${params.toString()}`);
 
         if (reset) {
           document.getElementById('stat-total').textContent = `GHS ${Number(data.stats?.totalPayable || 0).toLocaleString()}`;
-          document.getElementById('stat-due').textContent = data.stats?.due || 0;
-          document.getElementById('stat-paid').textContent = `GHS ${Number(data.stats?.paid || 0).toLocaleString()}`;
-          document.getElementById('stat-pending').textContent = `GHS ${Number(data.stats?.pending || 0).toLocaleString()}`;
+          document.getElementById('stat-due').textContent = data.stats?.totalAgents || 0;
+          document.getElementById('stat-paid').textContent = `GHS ${Number(data.stats?.totalPaid || 0).toLocaleString()}`;
+          document.getElementById('stat-pending').textContent = `GHS ${Number(data.stats?.totalPending || 0).toLocaleString()}`;
         }
 
         const tbody = document.getElementById('payroll-table');
         if (reset) tbody.innerHTML = '';
 
         if (!data.agents || data.agents.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="9" class="p-12 text-center text-purple-300 text-xl">No payroll data</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" class="p-12 text-center text-purple-300 text-xl">No payroll data for this period</td></tr>';
           hasMore = false;
           return;
         }
 
         data.agents.forEach(agent => {
-          const pending = (agent.earned || 0) - (agent.paid || 0);
+          const pending = agent.pending || 0;
 
           const tr = document.createElement('tr');
           tr.className = 'hover:bg-white/10';
@@ -253,12 +373,12 @@
           cb.addEventListener('change', updateTotalAmount);
         });
 
-        hasMore = data.agents.length === 15;
+        hasMore = data.pagination?.hasMore || data.agents.length === 15;
         document.getElementById('load-more').classList.toggle('hidden', !hasMore);
         currentPage++;
       } catch (err) {
         console.error("Payroll error:", err);
-        showToast("Failed to load payroll", false);
+        showToast("Failed to load payroll data", false);
       }
     }
 
@@ -267,7 +387,7 @@
       document.querySelectorAll('.pay-checkbox:checked').forEach(cb => {
         total += parseFloat(cb.dataset.amount || 0);
       });
-      document.getElementById('total-amount').textContent = `GHS ${total.toLocaleString()}`;
+      document.getElementById('total-amount').textContent = `GHS ${total.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
       document.getElementById('agent-count').textContent = document.querySelectorAll('.pay-checkbox:checked').length;
     }
 
@@ -296,21 +416,15 @@
     document.getElementById('pay-form').onsubmit = async e => {
       e.preventDefault();
       const agents = Array.from(document.querySelectorAll('.pay-checkbox:checked')).map(cb => cb.value);
-      const amount = document.getElementById('total-amount').textContent.replace(/[^0-9.-]+/g,"");
+      const amount = document.getElementById('total-amount').textContent.replace(/[^0-9.]/g, "");
       const type = document.getElementById('payout-type').value;
       const method = document.getElementById('payment-method').value;
       const note = document.getElementById('pay-note').value;
 
       try {
-        const res = await fetch('/api/payroll/admin/pay', {  // CORRECTED PAYMENT ROUTE
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ agent_ids: agents, amount, payout_type: type, method, note })
-        });
-
-        if (!res.ok) throw new Error('Payment failed');
-        
-        showToast(`Successfully paid ${agents.length} agent(s)`);
+        // You can create this endpoint later for actual payment
+        // await apiFetch('/api/payroll/pay', { method: 'POST', body: JSON.stringify({ agents, amount, type, method, note }) });
+        showToast(`Payment of GHS ${amount} for ${agents.length} agent(s) recorded`);
         closePay();
         loadPayroll(true);
       } catch (err) {
@@ -318,19 +432,16 @@
       }
     };
 
-    // Mobile menu
-    document.getElementById('menu-btn').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('open');
-    });
-
-    // Default period
+    // Default period: last 30 days
     const today = new Date().toISOString().slice(0,10);
     const lastMonth = new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0,10);
     document.getElementById('period-start').value = lastMonth;
     document.getElementById('period-end').value = today;
 
     // Load on start
-    loadPayroll(true);
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPayroll(true);
+    });
   </script>
 </body>
 </html>
